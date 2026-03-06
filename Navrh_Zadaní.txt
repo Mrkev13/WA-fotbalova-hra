@@ -1,0 +1,99 @@
+2. Fáze vývoje: Návrh a Specifikace
+(Pixel Football Tycoon)
+Tento dokument slouží jako technický plán pro realizaci MVP verze hry.
+1. Uživatelské obrazovky (Wireframy)
+Zde je slovní popis rozložení, do dokumentu si nakresli obdélníky (např. ve Figma, Canva
+nebo tužkou).
+A) Úvodní stránka + Login
+● Střed: Velké logo hry.
+● Pod tím: Dvě tlačítka: [Přihlásit se] / [Nová registrace].
+● Patička: Copyright a jména autorů.
+B) Hlavní Dashboard (Klubovna)
+● Horní lišta: Název týmu | Stav konta | Úroveň klubu.
+● Levý sloupec (Menu): Tým, Trénink, Zápas, Trh, Žebříček.
+● Hlavní plocha:
+○ "Vítej, manažere!"
+○ Notifikace: "Poslední zápas: Výhra 2:1".
+○ Velké tlačítko: [Přejít k zápasu].
+C) Správa týmu (Squad)
+● Seznam: Tabulka pod sebou (11 řádků).
+● Sloupce: Jméno hráče | Síla Útoku | Síla Obrany | Tlačítko [Propustit].
+● Dole: Součet síly týmu (např. Útok: 450, Obrana: 420).
+D) Zápasová obrazovka (Match)
+● Levá strana: Můj Tým (Logo + Celková síla).
+● Pravá strana: Soupeř (Logo + Celková síla).
+● Uprostřed:
+○ Textové pole (log zápasu): "Novák střílí... GÓL!"
+○ Velké skóre: 2 : 1.
+○ Tlačítko po konci: [Zpět do klubovny].
+2. Uživatelský tok (User Flow)
+Jak hráč prochází aplikací:
+1. Start: Landing Page → Registrace (zadání jména týmu) → Vytvoření DB záznamu.
+2. Loop: Dashboard → Správa týmu (kontrola hráčů) → Tržiště (nákup posil) →
+Dashboard.
+3. Akce: Dashboard → Zápas (výběr soupeře) → Simulace → Výsledková obrazovka
+→ Dashboard (přičtení peněz).
+3. Detail herních systémů
+A) Generování hráčů
+Každý hráč má náhodně vygenerované statistiky při vytvoření:
+● Jméno: Náhodná kombinace (Karel + Novák).
+● Útok (ATT): Random číslo 10–50.
+● Obrana (DEF): Random číslo 10–50.
+● Cena: (ATT + DEF) * 10.
+B) Výpočet zápasu (Simulace)
+Pro MVP verzi použijeme jednoduchou matematiku:
+1. Sečte se Útok mého týmu ($A_{total}$).
+2. Sečte se Obrana soupeře ($D_{total}$).
+3. Přidá se faktor náhody ($R$ = -10% až +10%).
+4. Pokud $(A_{total} + R) > D_{total}$ → Vstřelím gól.
+5. Toto se opakuje 3x za zápas pro oba týmy.
+C) Progres
+● Zkušenosti (XP) se získávají za zápasy.
+● Při dosažení hranice XP se zvedne Level klubu → Odemkne se možnost kupovat
+lepší hráče.
+4. Herní ekonomika
+Cílem je, aby hráč neměl hned nejlepší tým, ale musel šetřit.
+Akce Cena / Příjem Čas Poznámka
+Registrace +1 000 mincí Jednorázově Startovní kapitál
+Výhra v zápase +100 mincí Okamžitě Hlavní zdroj příjmu
+Prohra v zápase +20 mincí Okamžitě Cena útěchy
+Nákup hráče -200 až -1000 mincí Okamžitě Dle statistik hráče
+Trénink (Stat +1) -50 mincí 10 sekund Zlepšení hráče
+Vstupní bonus +200 mincí 1x za 24h Motivace k návratu
+5. Datový model (ER Diagram)
+Návrh struktury databáze (relační DB - MySQL/PostgreSQL).
+Entity a atributy:
+1. USERS (Hráči)
+○ id (PK), username, password_hash, club_name, money, level.
+2. PLAYERS (Fotbalisti)
+○ id (PK), user_id (FK - komu patří), name, attack, defense, market_value.
+3. MATCHES (Zápasy)
+○ id (PK), home_user_id (FK), away_user_id (FK), score_home, score_away,
+timestamp.
+Vazby:
+● User 1:N Players (Jeden uživatel má více fotbalistů).
+● User 1:N Matches (Jeden uživatel hraje více zápasů).
+6. Návrh API (Funkce)
+Seznam endpointů, které bude backend (např. PHP/Node.js/Python) obsluhovat:
+● POST /api/register – Vytvoří uživatele a vygeneruje 11 startovních hráčů.
+● POST /api/login – Ověří heslo a vrátí token/session.
+● GET /api/team – Vrátí seznam hráčů přihlášeného uživatele.
+● GET /api/market – Zobrazí hráče, které si mohu koupit.
+● POST /api/buy_player – Odečte peníze, změní user_id u hráče na moje.
+● POST /api/match/play – Spustí algoritmus zápasu, zapíše výsledek do DB a vrátí
+skóre.
+7. Backlog a Odhad pracnosti
+Plánováno na 2 vývojáře, celkem cca 4 týdny práce po večerech.
+Fáze Úkol (Task) Odhad (hodiny) Priorita
+1. Setup Příprava projektu (Git, server, prázdná DB) 2h MUST
+2. Backend Návrh DB a vytvoření tabulek 4h MUST
+API: Registrace a Login (Auth) 6h MUST
+API: Generování náhodných hráčů 4h MUST
+API: Logika zápasu (algoritmus) 8h MUST
+3. Frontend Základní layout (HTML/CSS struktura) 6h MUST
+Napojení výpisu týmu (Fetch API) 4h MUST
+Obrazovka zápasu a výsledky 6h SHOULD
+4. Features Tržiště (nákup hráčů) 8h SHOULD
+Žebříček (Leaderboard) 3h SHOULD
+5. Finish Testování a oprava chyb (Bugfix) 5h MUST
+CELKEM Odhadovaný čas vývoje ~56 hodin
