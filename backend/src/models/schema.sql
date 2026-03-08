@@ -108,3 +108,46 @@ CREATE INDEX IF NOT EXISTS idx_matches_away_user_id ON matches(away_user_id);
 CREATE INDEX IF NOT EXISTS idx_match_events_match_id ON match_events(match_id);
 
 -- Triggers (PostgreSQL specific functions for constraints could be added here later, e.g. squad size limit)
+
+
+-- =========================================================
+-- PL/pgSQL FUNKCE PRO ZABEZPE�EN� TRANSAKC� (ODOLNOST API)
+-- =========================================================
+
+CREATE OR REPLACE FUNCTION buy_player_secure(
+    p_buyer_id INTEGER,
+    p_player_id INTEGER
+) RETURNS BOOLEAN AS $body
+DECLARE
+    v_player_price INTEGER;
+    v_buyer_money INTEGER;
+    v_player_status VARCHAR;
+BEGIN
+    SELECT market_value, status INTO v_player_price, v_player_status
+    FROM players 
+    WHERE id = p_player_id 
+    FOR UPDATE;
+
+    IF v_player_price IS NULL OR (v_player_status != 'ON_MARKET' AND user_id IS NOT NULL) THEN
+        RAISE EXCEPTION 'Hráč není na trhu nebo neexistuje.';
+    END IF;
+
+    SELECT money INTO v_buyer_money
+    FROM users 
+    WHERE id = p_buyer_id 
+    FOR UPDATE;
+
+    IF v_buyer_money < v_player_price THEN
+        RAISE EXCEPTION 'Nedostatek peněz na 11tu.';
+    END IF;
+
+    UPDATE users SET money = money - v_player_price WHERE id = p_buyer_id;
+    UPDATE players SET user_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
+    
+    INSERT INTO transactions (user_id, amount, transaction_type, description)
+    VALUES (p_buyer_id, -v_player_price, 'PLAYER_BOUGHT', 'Nákup hráče ID ' || p_player_id);
+
+    RETURN TRUE;
+END;
+$body LANGUAGE plpgsql;
+

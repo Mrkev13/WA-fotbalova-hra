@@ -60,19 +60,25 @@ Tyto routy vytvoříš a naplníš logikou v `backend/src/api`:
 
 ---
 
-## 5. Práce s penězi = Bezpečnost! (Profi TIP)
+## 5. Zabezpečení plateb (Transakce přes DB funkci)
 
-Až budeš nakupovat hráče, **NIKDY** to nedělej dvěma samostatnými asynchronními dotazy, u kterých jedno padne a druhé ne!!
+Aby se nestalo, že API spadne v půlce nákupu (peníze se strhnou, ale hráč se nepřevede), **neřeš nákup hráče manuálním updatováním databáze ve tvém kódu!**
 
-Musíš použít SQL **Tansakce**.
+V databázi jsem vytvořil speciální PL/pgSQL funkci `buy_player_secure(buyer_id, player_id)`. 
+
+**Co musíš udělat v API:**
+Stačí zavolat jediný SQL dotaz:
 ```sql
-BEGIN;
--- Zkontroluj peníze
--- Updatuj peníze (UPDATE users ...)
--- Updatuj majitele u hráče (UPDATE players ...)
--- Zapiš log o nákupu do tabulky TRANSACTIONS !
-COMMIT;
+SELECT buy_player_secure(123, 45); 
+-- Kde 123 je ID kupujícího a 45 je ID hráče
 ```
-Pokud něco selže, zavolej `ROLLBACK`.
+
+A databáze si **sama, bezpečně a atomicky** vyřeší:
+- Ověření, že je hráč na trhu.
+- Ověření, že má kupující dostatek financí (strhne z money).
+- Odepsání hráče na nového majitele (`status = 'IN_TEAM'`).
+- Vygenerování detailního logu do tabulky `transactions`.
+
+Pokud nemá kupující peníze nebo hráč neexistuje, tato funkce rovnou hodí přehledný **SQL Error/Exception** (např. *'Nedostatek peněz na účtu.'*), který jen odchytíš ve svém backend (try/catch) a pošleš na frontend jako 400 Bad Request.
 
 Good luck! 🚀

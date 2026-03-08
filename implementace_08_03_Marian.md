@@ -38,4 +38,6 @@ V návaznosti na to bylo dále doplněno a ošetřeno ještě několik chybějí
 *   **Generátor Jmen (`first_names`, `last_names`):** Podle vymyšlení (Bod 3 - např. Karel Novák) vznikly slovníkové tabulky s prvotním plněním 10 českých jmen a příjmení pro random skládání SQL scriptem během generování.
 *   **Výkonnost databáze (Indexy):** Všechny prohledávací klíče a důležité relace napříč db získaly explicitní postgre `INDEX`, abychom nezatížili server, jakmile začne tabulka uživatelů růst a bude se nad ní volat dashboard.
 
-*(Pozn.: Ošetření triggery, jako je např. limit soupisky maximálně na 11 hráčů, a odečet peněz pomocí SQL funkcí bude součástí aplikační vrstvy backend logika - @Hamudy)*
+### 7. Zabezpečení nákupů na úrovni databáze (Stored Procedure)
+Navzdory API manuálu byla přidána přímo do PostgreSQL procedura `buy_player_secure(buyer_id, player_id)`, která zajišťuje 100% ACID atomicitu. Pokud by Hamudy pochybil při psaní transakce, hrozil by přepis (race condition) financí. Nyní backend stačí zavolat 1 SQL funkci, která sama ověří stav konta, odečte finance, upraví majitele a zaloguje to v jednom bloku.
+
