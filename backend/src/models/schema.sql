@@ -2,20 +2,21 @@
 
 -- Table: users (Hráči)
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    club_name TEXT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    club_name VARCHAR(255) NOT NULL,
     money INTEGER DEFAULT 1000,
+    xp INTEGER DEFAULT 0,
     level INTEGER DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table: players (Fotbalisti)
 CREATE TABLE IF NOT EXISTS players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER,
-    name TEXT NOT NULL,
+    name VARCHAR(255) NOT NULL,
     attack INTEGER NOT NULL,
     defense INTEGER NOT NULL,
     market_value INTEGER NOT NULL,
@@ -24,7 +25,7 @@ CREATE TABLE IF NOT EXISTS players (
 
 -- Table: matches (Zápasy)
 CREATE TABLE IF NOT EXISTS matches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     home_user_id INTEGER NOT NULL,
     away_user_id INTEGER NOT NULL,
     score_home INTEGER NOT NULL,

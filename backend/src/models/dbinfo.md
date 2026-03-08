@@ -5,8 +5,9 @@ This document describes the database structure for Pixel Football Tycoon.
 ## SQL Tables
 
 ### `users`
-- Stores user account information, club metadata, and global progress (money, level).
+- Stores user account information, club metadata, and global progress (money, level, xp).
 - **Start Capital**: 1000 coins.
+- **Experience (xp)**: Starts at 0, goes up after matches. Reaching thresholds increases `level`.
 
 ### `players`
 - Stores individual football players.
