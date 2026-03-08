@@ -29,6 +29,13 @@ Dle požadavku byly do datového schématu zakomponovány tyto vlastnosti a mech
 *   **Stamina/Únava:** Přidán sloupec `stamina` (0-100), aby se zohlednil management svalů hráčů.
 *   **Stavy hráčů:** Volní vs zabraní vs odešlí do důchodu jsou odlišeni logickým sloupcem `status` (ON_MARKET, IN_TEAM, RETIRED). Umožňuje to snazší práci s trhem.
 *   **Logování financí:** Vytvořena detailní tabulka `transactions`, ke které se svede veškerý finanční provoz. Pomáhá odhalit bugy v ekonomice či exploity.
-*   **Logy zápasů:** Vytvořena tabulka `match_events`, abychom kromě strohého výsledku zachovali i sled událostí na hřišti (pro výpis "Novák dává Gól!").
+### 6. Příprava styčných bodů s API a Výkon (Dalších 5 změn)
+V návaznosti na to bylo dále doplněno a ošetřeno ještě několik chybějících dílků z návrhu zadání tak, aby se na to snáz navazovalo klukům v API týmu:
+
+*   **Leaderboard připravenost (`elo_rating`):** Pro smysluplný žebříček z bodu 7 byl hráčům do tabulky `users` připraven sloupec Elo, který se bude měnit po každém zápasu. Získáme tak soutěživou formu!
+*   **Čekárna na trénink (`training_queue`):** Zhmotněno zadání z bodu 4, kdy trénink trvá 10 sekund. Tabulka drží log kdo trénuje, do kdy a jaký získá atribut.
+*   **API Přihlašování (`sessions`):** Z bodu 6 (Login vrací token) vznikla databázová evidence těchto session tokenů pro ověření stavu uživatelů při volání API. Zvyšuje to reálnou aplikační bezpečnost.
+*   **Generátor Jmen (`first_names`, `last_names`):** Podle vymyšlení (Bod 3 - např. Karel Novák) vznikly slovníkové tabulky s prvotním plněním 10 českých jmen a příjmení pro random skládání SQL scriptem během generování.
+*   **Výkonnost databáze (Indexy):** Všechny prohledávací klíče a důležité relace napříč db získaly explicitní postgre `INDEX`, abychom nezatížili server, jakmile začne tabulka uživatelů růst a bude se nad ní volat dashboard.
 
 *(Pozn.: Ošetření triggery, jako je např. limit soupisky maximálně na 11 hráčů, a odečet peněz pomocí SQL funkcí bude součástí aplikační vrstvy backend logika - @Hamudy)*

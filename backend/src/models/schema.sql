@@ -9,8 +9,19 @@ CREATE TABLE IF NOT EXISTS users (
     money INTEGER DEFAULT 1000 CHECK (money >= 0),
     xp INTEGER DEFAULT 0 CHECK (xp >= 0),
     level INTEGER DEFAULT 1 CHECK (level >= 1),
+    elo_rating INTEGER DEFAULT 1000, -- For leaderboard (Elo system)
     last_daily_bonus TIMESTAMP, -- For 24h bonus tracking
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table: sessions (Pro API přihlašování)
+CREATE TABLE IF NOT EXISTS sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Table: players (Fotbalisti)
@@ -25,6 +36,28 @@ CREATE TABLE IF NOT EXISTS players (
     market_value INTEGER NOT NULL CHECK (market_value >= 0),
     status VARCHAR(20) DEFAULT 'IN_TEAM' CHECK (status IN ('ON_MARKET', 'IN_TEAM', 'RETIRED')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Table: training_queue (Čekárna na trénink)
+CREATE TABLE IF NOT EXISTS training_queue (
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL,
+    stat_to_improve VARCHAR(20) NOT NULL CHECK (stat_to_improve IN ('attack', 'defense', 'stamina')),
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ends_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+);
+
+-- Table: first_names (Slovník křestních jmen pro generátor)
+CREATE TABLE IF NOT EXISTS first_names (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Table: last_names (Slovník příjmení pro generátor)
+CREATE TABLE IF NOT EXISTS last_names (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- Table: transactions (Logování ekonomiky)
@@ -60,5 +93,18 @@ CREATE TABLE IF NOT EXISTS match_events (
     description TEXT NOT NULL,
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
 );
+
+-- Data pro generátor (MVP Seed data)
+INSERT INTO first_names (name) VALUES ('Karel'), ('Jan'), ('Petr'), ('Josef'), ('Jiří'), ('Pavel'), ('Martin'), ('Tomáš'), ('Jaroslav'), ('Miroslav') ON CONFLICT DO NOTHING;
+INSERT INTO last_names (name) VALUES ('Novák'), ('Svoboda'), ('Novotný'), ('Dvořák'), ('Černý'), ('Procházka'), ('Kučera'), ('Veselý'), ('Krejčí'), ('Horák') ON CONFLICT DO NOTHING;
+
+-- Indexes pro optimalizaci DB dotazů (Performance Optimization)
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_players_user_id ON players(user_id);
+CREATE INDEX IF NOT EXISTS idx_training_queue_player_id ON training_queue(player_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_matches_home_user_id ON matches(home_user_id);
+CREATE INDEX IF NOT EXISTS idx_matches_away_user_id ON matches(away_user_id);
+CREATE INDEX IF NOT EXISTS idx_match_events_match_id ON match_events(match_id);
 
 -- Triggers (PostgreSQL specific functions for constraints could be added here later, e.g. squad size limit)
