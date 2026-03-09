@@ -10,5 +10,15 @@
     "trenink_cena": 50,
     "trenink_vysledek": 1,
     "trenink_cas_v_sekundach": 10,
-    "vstupni_bonus_24h": 200
+    "vstupni_bonus_24h": 200,
+    "xp_odmeny": {
+        "vyhra": 50,
+        "remiza": 20,
+        "prohra": 10
+    },
+    "elo_odmeny": {
+        "vyhra": 10,
+        "remiza": 0,
+        "prohra": -5
+    }
 }

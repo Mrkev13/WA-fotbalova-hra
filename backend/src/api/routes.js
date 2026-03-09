@@ -138,7 +138,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
     
     try {
         // Načtení domácího týmu
-        const myTeamRes = await db.query("SELECT attack as att, defense as def FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [userId]);
+        const myTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [userId]);
         const myTeam = myTeamRes.rows;
         
         if (myTeam.length < 11) return res.status(400).json({ error: "Musíš mít alespoň 11 hráčů v týmu!" });
@@ -148,7 +148,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
 
         if (opponentId !== 0) {
             // Načtení soupeřova týmu z DB
-            const oppTeamRes = await db.query("SELECT attack as att, defense as def FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [opponentId]);
+            const oppTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [opponentId]);
             opponentTeam = oppTeamRes.rows;
             
             if (opponentTeam.length < 11) {
@@ -160,7 +160,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
             // Protože playerService.generateStartingEleven nově ukládá do DB, musíme si zde vygenerovat jen "staty" v paměti
             // Pro jednoduchost zde vytvoříme dummy tým
              for(let i=0; i<11; i++) {
-                opponentTeam.push({ att: Math.floor(Math.random() * 40) + 10, def: Math.floor(Math.random() * 40) + 10 });
+                opponentTeam.push({ attack: Math.floor(Math.random() * 40) + 10, defense: Math.floor(Math.random() * 40) + 10 });
             }
         }
 
@@ -169,24 +169,12 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         const isWin = matchResult.myGoals > matchResult.opponentGoals;
         const isDraw = matchResult.myGoals === matchResult.opponentGoals;
 
-        // Odměny
-        let moneyReward = 0;
-        let xpReward = 0;
-        let eloChange = 0;
-
-        if (isWin) {
-            moneyReward = economyService.getMatchReward(true); 
-            xpReward = 10; 
-            eloChange = 10;
-        } else if (isDraw) {
-            moneyReward = economyService.getMatchReward(false); 
-            xpReward = 5;
-            eloChange = 0;
-        } else {
-            moneyReward = economyService.getMatchReward(false); 
-            xpReward = 2;
-            eloChange = -5;
-        }
+        // Odměny - načítání přes economyService (z configu)
+        let resultType = isWin ? 'win' : (isDraw ? 'draw' : 'lose');
+        
+        const moneyReward = economyService.getMatchMoneyReward(resultType);
+        const xpReward = economyService.getMatchXPReward(resultType);
+        const eloChange = economyService.getMatchEloReward(resultType);
 
         // Zápis zápasu
         await db.query(
