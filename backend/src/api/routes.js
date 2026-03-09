@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const router = express.Router();
 
 const db = require('../models/db'); // Tvé připojení k DB
@@ -8,19 +8,31 @@ const playerService = require('../services/playerService');
 const matchService = require('../services/matchService');
 const economyService = require('../services/economyService');
 
-const JWT_SECRET = 'super_tajny_klic_pixel_football';
-
 // --- MIDDLEWARE PRO OVĚŘENÍ TOKENU ---
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ error: "Chybí token!" });
     
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: "Neplatný token!" });
-        req.user = user;
+    try {
+        const result = await db.query(
+            `SELECT u.id, u.username, u.money, u.level, u.elo_rating 
+             FROM sessions s 
+             JOIN users u ON s.user_id = u.id 
+             WHERE s.token = $1 AND s.expires_at > NOW()`,
+            [token]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(403).json({ error: "Neplatný nebo expirovaný token!" });
+        }
+
+        req.user = result.rows[0];
         next();
-    });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Chyba při ověřování tokenu." });
+    }
 };
 
 // ==========================================
@@ -40,17 +52,9 @@ router.post('/register', async (req, res) => {
         );
         const userId = userRes.rows[0].id;
 
-        // Vygenerování 11 startovních hráčů
-        const startingEleven = playerService.generateStartingEleven();
+        // Vygenerování 11 startovních hráčů (nyní přes playerService s DB)
+        await playerService.generateStartingEleven(userId);
         
-        for (const player of startingEleven) {
-            await db.query(
-                `INSERT INTO players (user_id, name, attack, defense, market_value) 
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [userId, `${player.firstName} ${player.lastName}`, player.att, player.def, player.price]
-            );
-        }
-
         res.status(201).json({ message: "Uživatel a startovní tým úspěšně vytvořeni!" });
     } catch (error) {
         res.status(500).json({ error: "Chyba při registraci: " + error.message });
@@ -59,7 +63,6 @@ router.post('/register', async (req, res) => {
 
 
 // 2. LOGIN 
-
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -72,7 +75,16 @@ router.post('/login', async (req, res) => {
         
         if (!validPassword) return res.status(400).json({ error: "Špatné heslo" });
 
-        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
+        // Generování random session tokenu
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24); // Token platí 24 hodin
+
+        await db.query(
+            `INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+            [user.id, token, expiresAt]
+        );
+
         res.json({ token, message: "Úspěšné přihlášení", user: { username: user.username, money: user.money, level: user.level } });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -94,8 +106,8 @@ router.get('/team', authenticateToken, async (req, res) => {
 // 4. TRH HRÁČŮ (/api/market)
 router.get('/market', authenticateToken, async (req, res) => {
     try {
-        // Zobrazí hráče, kteří nemají majitele
-        const result = await db.query('SELECT * FROM players WHERE user_id IS NULL');
+        // Zobrazí hráče, kteří jsou na trhu nebo nemají majitele
+        const result = await db.query("SELECT * FROM players WHERE status = 'ON_MARKET' OR user_id IS NULL");
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -103,85 +115,110 @@ router.get('/market', authenticateToken, async (req, res) => {
 });
 
 // 5. NÁKUP HRÁČE (/api/buy_player)
-
 router.post('/buy_player', authenticateToken, async (req, res) => {
     const { playerId } = req.body;
     const userId = req.user.id;
 
     try {
-        const userRes = await db.query('SELECT money FROM users WHERE id = $1', [userId]);
-        const playerRes = await db.query('SELECT * FROM players WHERE id = $1 AND user_id IS NULL', [playerId]);
-        
-        if (playerRes.rows.length === 0) return res.status(400).json({ error: "Hráč neexistuje nebo už je prodaný." });
-        
-        const userMoney = userRes.rows[0].money;
-        const playerPrice = playerRes.rows[0].market_value;
-
-        if (!economyService.canAfford(userMoney, playerPrice)) {
-            return res.status(400).json({ error: "Nemáš dostatek peněz." });
-        }
-
-        await db.query('UPDATE users SET money = money - $1 WHERE id = $2', [playerPrice, userId]);
-        await db.query('UPDATE players SET user_id = $1 WHERE id = $2', [userId, playerId]);
+        // Použití bezpečné DB funkce
+        await db.query('SELECT buy_player_secure($1, $2)', [userId, playerId]);
 
         res.json({ message: "Hráč úspěšně zakoupen!" });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Odchycení chyby z DB (např. nedostatek peněz)
+        res.status(400).json({ error: error.message });
     }
 });
 
 
 // 6. ZÁPAS (/api/match/play)
-
 router.post('/match/play', authenticateToken, async (req, res) => {
     const userId = req.user.id;
+    const { away_user_id } = req.body;
     
     try {
-        const myTeamRes = await db.query('SELECT attack as att, defense as def FROM players WHERE user_id = $1', [userId]);
+        // Načtení domácího týmu
+        const myTeamRes = await db.query("SELECT attack as att, defense as def FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [userId]);
         const myTeam = myTeamRes.rows;
         
         if (myTeam.length < 11) return res.status(400).json({ error: "Musíš mít alespoň 11 hráčů v týmu!" });
 
-        const opponentTeam = playerService.generateStartingEleven();
+        let opponentTeam = [];
+        let opponentId = away_user_id || 0; // Pokud není zadán soupeř, ID 0 (bot)
 
+        if (opponentId !== 0) {
+            // Načtení soupeřova týmu z DB
+            const oppTeamRes = await db.query("SELECT attack as att, defense as def FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [opponentId]);
+            opponentTeam = oppTeamRes.rows;
+            
+            if (opponentTeam.length < 11) {
+                // Fallback nebo error - zde zvolíme error, pokud chceme validní zápas
+                return res.status(400).json({ error: "Soupeř nemá kompletní tým!" });
+            }
+        } else {
+            // Generování náhodného týmu (pro testování nebo PvE) - použijeme starou logiku, ale musíme ji mít dostupnou
+            // Protože playerService.generateStartingEleven nově ukládá do DB, musíme si zde vygenerovat jen "staty" v paměti
+            // Pro jednoduchost zde vytvoříme dummy tým
+             for(let i=0; i<11; i++) {
+                opponentTeam.push({ att: Math.floor(Math.random() * 40) + 10, def: Math.floor(Math.random() * 40) + 10 });
+            }
+        }
+
+        // Simulace
         const matchResult = matchService.simulateMatch(myTeam, opponentTeam);
         const isWin = matchResult.myGoals > matchResult.opponentGoals;
         const isDraw = matchResult.myGoals === matchResult.opponentGoals;
 
+        // Odměny
         let moneyReward = 0;
         let xpReward = 0;
+        let eloChange = 0;
 
         if (isWin) {
             moneyReward = economyService.getMatchReward(true); 
-            xpReward = 50; 
+            xpReward = 10; 
+            eloChange = 10;
         } else if (isDraw) {
             moneyReward = economyService.getMatchReward(false); 
-            xpReward = 20;
+            xpReward = 5;
+            eloChange = 0;
         } else {
             moneyReward = economyService.getMatchReward(false); 
-            xpReward = 10;
+            xpReward = 2;
+            eloChange = -5;
         }
 
-      
+        // Zápis zápasu
         await db.query(
             `INSERT INTO matches (home_user_id, away_user_id, score_home, score_away) 
              VALUES ($1, $2, $3, $4)`,
-            [userId, 0, matchResult.myGoals, matchResult.opponentGoals]
+            [userId, opponentId, matchResult.myGoals, matchResult.opponentGoals]
         );
 
+        // Update uživatele (peníze, XP, ELO)
         await db.query(
-            `UPDATE users SET money = money + $1 WHERE id = $2`, 
-            [moneyReward, userId]
+            `UPDATE users SET money = money + $1, xp = xp + $2, elo_rating = elo_rating + $3 WHERE id = $4`, 
+            [moneyReward, xpReward, eloChange, userId]
         );
+        
+        // Pokud je soupeř reálný hráč, upravíme mu ELO (zjednodušeně)
+        if (opponentId !== 0) {
+             await db.query(
+                `UPDATE users SET elo_rating = elo_rating - $1 WHERE id = $2`, 
+                [eloChange, opponentId]
+            );
+        }
 
         res.json({
             score: matchResult.resultString,
             reward: `+${moneyReward} mincí`,
             xp: `+${xpReward} XP`,
+            elo_diff: `${eloChange > 0 ? '+' : ''}${eloChange}`,
             message: isWin ? "Vyhrál jsi!" : (isDraw ? "Remíza!" : "Prohrál jsi!")
         });
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 });
