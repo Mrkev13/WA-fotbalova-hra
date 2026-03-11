@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Football Tycoon</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ════════════════════ LOGIN ════════════════════ -->
+<div id="s-login" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">PIXEL<br>FOOTBALL</div>
+    <div class="login-logo-sub">TYCOON</div>
+
+    <div class="login-tabs">
+      <button class="login-tab act" id="tab-login" onclick="switchTab('login')">PRIHLASIT SE</button>
+      <button class="login-tab"     id="tab-reg"   onclick="switchTab('reg')">REGISTRACE</button>
+    </div>
+
+    <div class="login-form" id="form-login">
+      <div class="f-group">
+        <label class="f-label" for="li-user">Uzivatelske jmeno</label>
+        <input class="f-input" id="li-user" type="text" placeholder="manager123"
+               autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="li-pass">Heslo</label>
+        <input class="f-input" id="li-pass" type="password" placeholder="••••••••"
+               autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">PRIHLASIT SE</button>
+      <div class="msg" id="msg-login"></div>
+    </div>
+
+    <div class="login-form" id="form-reg" style="display:none">
+      <div class="f-group">
+        <label class="f-label" for="re-user">Uzivatelske jmeno</label>
+        <input class="f-input" id="re-user" type="text" placeholder="manager123"
+               autocomplete="username">
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="re-club">Nazev klubu</label>
+        <input class="f-input" id="re-club" type="text" placeholder="FC Hvezdicky">
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="re-pass">Heslo</label>
+        <input class="f-input" id="re-pass" type="password" placeholder="••••••••"
+               autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary" id="btn-reg" onclick="doRegister()">REGISTROVAT SE</button>
+      <div class="msg" id="msg-reg"></div>
+    </div>
+
+    <div class="login-footer">(c) 2025 PIXEL FOOTBALL TYCOON &middot; WA PROJEKT</div>
+  </div>
+</div>
+
+<!-- ════════════════════ APP ════════════════════ -->
+<div id="s-app" class="screen">
+
+  <div class="topbar">
+    <div class="tb-logo">PF<span>:</span>T</div>
+    <div class="tb-club"><div class="tb-club-name" id="tb-club"></div></div>
+    <div class="tb-stats">
+      <div class="tb-stat">
+        <div class="tb-stat-val" id="tb-money">—</div>
+        <div class="tb-stat-lbl">MINCE</div>
+      </div>
+      <div class="tb-stat">
+        <div class="tb-stat-val" id="tb-level">—</div>
+        <div class="tb-stat-lbl">LEVEL</div>
+      </div>
+      <div class="tb-stat">
+        <div class="tb-stat-val" id="tb-elo">—</div>
+        <div class="tb-stat-lbl">ELO</div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-logout" onclick="doLogout()">ODHLASIT</button>
+    </div>
+  </div>
+
+  <div class="app-nav">
+    <button class="nav-btn act" data-page="dashboard"   onclick="navTo('dashboard')">KLUBOVNA</button>
+    <button class="nav-btn"     data-page="team"        onclick="navTo('team')">TYM</button>
+    <button class="nav-btn"     data-page="match"       onclick="navTo('match')">ZAPAS</button>
+    <button class="nav-btn"     data-page="market"      onclick="navTo('market')">TRZISTE</button>
+    <button class="nav-btn"     data-page="leaderboard" onclick="navTo('leaderboard')">ZEBRICEK</button>
+    <button class="nav-btn nav-logout-mob" onclick="doLogout()">ODHLASIT</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page act">
+    <div class="wrap">
+      <div class="dash-grid">
+        <div class="dash-main">
+          <div class="dash-hero">
+            <div class="dash-welcome">VITEJ ZPET, MANAGERE</div>
+            <div class="dash-club-name" id="dash-club">—</div>
+            <div class="dash-last" id="dash-last">
+              <div>
+                <div class="dash-last-lbl">POSLEDNI ZAPAS</div>
+                <div class="dash-last-score" id="dash-last-score">—</div>
+              </div>
+              <div class="dash-last-result" id="dash-last-result">—</div>
+            </div>
+          </div>
+          <div class="dash-actions">
+            <div class="action-card" onclick="navTo('match')">
+              <div><div class="ac-title">ODEHRAT ZAPAS</div><div class="ac-desc">VYBER SOUPE A ZAHRAJ ZAPAS</div></div>
+              <div class="ac-arrow">&rsaquo;</div>
+            </div>
+            <div class="action-card" onclick="navTo('team')">
+              <div><div class="ac-title">SPRAVA TYMU</div><div class="ac-desc">HRACI &middot; TRENINK &middot; SESTAVY</div></div>
+              <div class="ac-arrow">&rsaquo;</div>
+            </div>
+            <div class="action-card" onclick="navTo('market')">
+              <div><div class="ac-title">TRZISTE HRACU</div><div class="ac-desc">NAKUP POSILY PRO SVUJ KLUB</div></div>
+              <div class="ac-arrow">&rsaquo;</div>
+            </div>
+            <div class="action-card" onclick="navTo('leaderboard')">
+              <div><div class="ac-title">ZEBRICEK</div><div class="ac-desc">POROVNEJ SE S OSTATNIMI</div></div>
+              <div class="ac-arrow">&rsaquo;</div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-side">
+          <div class="sb">
+            <div class="sb-head">STAV KLUBU</div>
+            <div class="sb-row"><span class="sb-lbl">MINCE</span><span class="sb-val or" id="sd-money">—</span></div>
+            <div class="sb-row"><span class="sb-lbl">LEVEL</span><span class="sb-val"    id="sd-level">—</span></div>
+            <div class="sb-row"><span class="sb-lbl">ELO</span><span class="sb-val"      id="sd-elo">—</span></div>
+            <div class="sb-row"><span class="sb-lbl">HRACU V TYMU</span><span class="sb-val" id="sd-players">—</span></div>
+            <div class="xp-wrap">
+              <div class="xp-head"><span>XP PROGRES</span><span id="sd-xp-txt">—</span></div>
+              <div class="xp-track"><div class="xp-fill" id="sd-xp-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="sb">
+            <div class="sb-head">EKONOMIKA</div>
+            <div class="sb-row"><span class="sb-lbl">VYHRA</span><span class="sb-val gn">+100 minci</span></div>
+            <div class="sb-row"><span class="sb-lbl">PROHRA</span><span class="sb-val">+20 minci</span></div>
+            <div class="sb-row"><span class="sb-lbl">TRENINK</span><span class="sb-val rd">-50 minci</span></div>
+            <div class="sb-row"><span class="sb-lbl">DENNI BONUS</span><span class="sb-val gn">+200 minci</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM -->
+  <div id="page-team" class="page">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-title">SPRAVA TYMU</span>
+        <span class="sec-meta" id="team-count">— HRACU</span>
+      </div>
+      <div class="team-bar">
+        <div class="team-bar-cell"><div class="team-bar-num" id="ts-atk">—</div><div class="team-bar-lbl">CELKOVY UTOK</div></div>
+        <div class="team-bar-cell"><div class="team-bar-num" id="ts-def">—</div><div class="team-bar-lbl">CELKOVA OBRANA</div></div>
+        <div class="team-bar-cell"><div class="team-bar-num" id="ts-total">—</div><div class="team-bar-lbl">CELKOVA SILA</div></div>
+      </div>
+      <div class="loader" id="team-loader"><div class="spinner"></div></div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:32px">#</th>
+              <th>HRAC</th>
+              <th class="hide-m">POZICE</th>
+              <th class="c">ATK</th>
+              <th class="c">DEF</th>
+              <th class="r hide-m">HODNOTA</th>
+              <th class="r">AKCE</th>
+            </tr>
+          </thead>
+          <tbody id="team-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCH -->
+  <div id="page-match" class="page">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-title">ZAPASOVA OBRAZOVKA</span>
+        <span class="sec-meta">SIMULACE ZAPASU</span>
+      </div>
+      <div class="match-setup" id="match-setup">
+        <div class="match-half">
+          <div class="mh-label">MUJ TYM</div>
+          <div class="mh-team" id="mh-my-name">—</div>
+          <div class="mh-strength">UTOK: <b id="mh-my-atk">—</b> &nbsp;&middot;&nbsp; OBRANA: <b id="mh-my-def">—</b></div>
+          <button class="btn btn-primary" id="play-btn" onclick="playMatch()">ZAHRAT ZAPAS</button>
+          <div class="match-opp-info" id="match-opp-info">Vyber soupe vpravo nebo hraj proti botovi.</div>
+        </div>
+        <div class="match-half">
+          <div class="mh-label">VYBER SOUPE</div>
+          <button class="btn btn-dark-ghost btn-sm" id="bot-btn" onclick="selectBot()" style="width:100%;margin-bottom:16px;display:block">HRAT PROTI BOTOVI</button>
+          <div class="loader" id="opp-loader"><div class="spinner"></div></div>
+          <div class="opp-list" id="opp-list"></div>
+        </div>
+      </div>
+      <div class="match-result" id="match-result">
+        <div class="mr-label">VYSLEDEK ZAPASU</div>
+        <div class="mr-score"  id="mr-score">—</div>
+        <div class="mr-result" id="mr-result">—</div>
+        <div class="mr-rewards">
+          <div class="mr-reward"><div class="mr-reward-val" id="mr-money">—</div>MINCE</div>
+          <div class="mr-reward"><div class="mr-reward-val" id="mr-xp">—</div>XP</div>
+          <div class="mr-reward"><div class="mr-reward-val" id="mr-elo">—</div>ELO</div>
+        </div>
+        <button class="btn btn-outline btn-sm"
+          style="margin-top:28px;border-color:rgba(0,0,0,.4);color:var(--bk)"
+          onclick="resetMatch()">HRAT ZNOVU</button>
+      </div>
+      <div class="match-log" id="match-log">
+        <div class="match-log-head">PRUBEH ZAPASU</div>
+        <div id="match-log-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET -->
+  <div id="page-market" class="page">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-title">TRZISTE HRACU</span>
+        <span class="sec-meta" id="market-meta">—</span>
+      </div>
+      <div class="loader" id="market-loader"><div class="spinner"></div></div>
+      <div class="market-grid" id="market-grid"></div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div id="page-leaderboard" class="page">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-title">ZEBRICEK MANAGERU</span>
+        <span class="sec-meta">ELO RANKING</span>
+      </div>
+      <div class="loader" id="lb-loader"><div class="spinner"></div></div>
+      <div class="lb-wrap">
+        <table class="lb-tbl" id="lb-tbl" style="display:none">
+          <thead>
+            <tr>
+              <th style="width:52px;text-align:center">POR.</th>
+              <th>MANAGER / KLUB</th>
+              <th class="r">ELO</th>
+              <th class="r hide-m">LEVEL</th>
+              <th class="r hide-m">MINCE</th>
+            </tr>
+          </thead>
+          <tbody id="lb-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#s-app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+// Change API_BASE to match your server, e.g.:
+// const API_BASE = 'http://localhost:3000/api';
+// ═══════════════════════════════════════════════════
+const API_BASE = '/api';
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let token       = localStorage.getItem('pft_token') || null;
+let currentUser = JSON.parse(localStorage.getItem('pft_user') || 'null');
+let teamData    = [];
+let selectedOpp = null; // null = bot, number = opponent user id
+
+// ═══════════════════════════════════════════════════
+// DOM HELPERS
+// ═══════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function setMsg(id, type, text) {
+  const el = $(id);
+  el.className = 'msg ' + type;
+  el.textContent = text;
+}
+function clearMsg(id) {
+  const el = $(id);
+  el.className = 'msg';
+  el.textContent = '';
+}
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════
+// API WRAPPER
+// ═══════════════════════════════════════════════════
+async function apiFetch(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token)           opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  let res;
+  try {
+    res = await fetch(API_BASE + path, opts);
+  } catch (_) {
+    throw new Error('Nelze se spojit se serverem. Je backend spusteny?');
+  }
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
+function switchTab(tab) {
+  $('tab-login').classList.toggle('act', tab === 'login');
+  $('tab-reg').classList.toggle('act',   tab === 'reg');
+  $('form-login').style.display = tab === 'login' ? '' : 'none';
+  $('form-reg').style.display   = tab === 'reg'   ? '' : 'none';
+}
+
+async function doLogin() {
+  const username = $('li-user').value.trim();
+  const password = $('li-pass').value;
+  if (!username || !password) { setMsg('msg-login','err','Vyplnte vsechna pole.'); return; }
+  clearMsg('msg-login');
+  const btn = $('btn-login');
+  btn.disabled = true; btn.textContent = 'PRIHLASOVANI...';
+  try {
+    const data = await apiFetch('POST', '/login', { username, password });
+    // Backend returns: { token, message, user: { username, money, level } }
+    token = data.token;
+    currentUser = Object.assign({ username }, data.user || {});
+    localStorage.setItem('pft_token', token);
+    localStorage.setItem('pft_user', JSON.stringify(currentUser));
+    enterApp();
+  } catch (e) {
+    setMsg('msg-login','err', e.message);
+    btn.disabled = false; btn.textContent = 'PRIHLASIT SE';
+  }
+}
+
+async function doRegister() {
+  const username  = $('re-user').value.trim();
+  const club_name = $('re-club').value.trim();
+  const password  = $('re-pass').value;
+  if (!username || !club_name || !password) { setMsg('msg-reg','err','Vyplnte vsechna pole.'); return; }
+  clearMsg('msg-reg');
+  const btn = $('btn-reg');
+  btn.disabled = true; btn.textContent = 'REGISTRACE...';
+  try {
+    await apiFetch('POST', '/register', { username, club_name, password });
+    setMsg('msg-reg','ok','Ucet vytvoren! Prihlasovani...');
+    setTimeout(async () => {
+      $('li-user').value = username;
+      $('li-pass').value = password;
+      switchTab('login');
+      await doLogin();
+    }, 800);
+  } catch (e) {
+    setMsg('msg-reg','err', e.message);
+    btn.disabled = false; btn.textContent = 'REGISTROVAT SE';
+  }
+}
+
+function doLogout() {
+  token = null; currentUser = null; teamData = []; selectedOpp = null;
+  localStorage.removeItem('pft_token');
+  localStorage.removeItem('pft_user');
+  $('s-app').classList.remove('active');
+  $('s-login').classList.add('active');
+  navActivate('dashboard');
+}
+
+// ═══════════════════════════════════════════════════
+// APP ENTRY
+// ═══════════════════════════════════════════════════
+function enterApp() {
+  $('s-login').classList.remove('active');
+  $('s-app').classList.add('active');
+  navActivate('dashboard');
+  syncTopbar();
+  loadDashboard();
+}
+
+function syncTopbar() {
+  if (!currentUser) return;
+  const club = currentUser.club_name || currentUser.username || '—';
+  $('tb-club').textContent   = club;
+  $('tb-money').textContent  = currentUser.money       != null ? currentUser.money       : '—';
+  $('tb-level').textContent  = currentUser.level       != null ? currentUser.level       : '—';
+  $('tb-elo').textContent    = currentUser.elo_rating  != null ? currentUser.elo_rating  : '—';
+  $('dash-club').textContent = club;
+  $('sd-money').textContent  = currentUser.money       != null ? currentUser.money + ' minci' : '—';
+  $('sd-level').textContent  = currentUser.level       != null ? currentUser.level       : '—';
+  $('sd-elo').textContent    = currentUser.elo_rating  != null ? currentUser.elo_rating  : '—';
+  const xp  = currentUser.xp || 0;
+  const cap = Math.max(1, (currentUser.level || 1)) * 100;
+  const pct = Math.min(100, Math.round((xp % cap) / cap * 100));
+  $('sd-xp-txt').textContent   = xp + ' XP';
+  $('sd-xp-fill').style.width  = pct + '%';
+}
+
+function saveUser() {
+  localStorage.setItem('pft_user', JSON.stringify(currentUser));
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
+function navActivate(page) {
+  document.querySelectorAll('.nav-btn[data-page]').forEach(b => {
+    b.classList.toggle('act', b.dataset.page === page);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('act'));
+  const pg = $('page-' + page);
+  if (pg) pg.classList.add('act');
+}
+
+function navTo(page) {
+  navActivate(page);
+  if (page === 'team')        loadTeam();
+  if (page === 'match')       loadMatch();
+  if (page === 'market')      loadMarket();
+  if (page === 'leaderboard') loadLeaderboard();
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const players = await apiFetch('GET', '/team');
+    teamData = players;
+    $('sd-players').textContent = players.length;
+  } catch (_) { /* non-critical */ }
+}
+
+function showLastMatchBanner(result) {
+  if (!result) return;
+  $('dash-last-score').textContent  = result.score || '?';
+  const isWin  = (result.message || '').includes('Vyhr');
+  const isDraw = (result.message || '').includes('Rem');
+  $('dash-last-result').textContent = isWin ? 'VYHRA' : isDraw ? 'REMIZA' : 'PROHRA';
+  $('dash-last').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════
+// TEAM
+// ═══════════════════════════════════════════════════
+const trainingActive = {};
+
+async function loadTeam() {
+  $('team-loader').classList.add('show');
+  $('team-tbody').innerHTML = '';
+  try {
+    const players = await apiFetch('GET', '/team');
+    teamData = players;
+    renderTeam(players);
+  } catch (e) {
+    $('team-tbody').innerHTML =
+      '<tr><td colspan="7" style="padding:24px;color:var(--rd);text-align:center">' +
+      escHtml(e.message) + '</td></tr>';
+  } finally {
+    $('team-loader').classList.remove('show');
+  }
+}
+
+function renderTeam(players) {
+  $('team-count').textContent = players.length + ' HRACU';
+  const totAtk = players.reduce((s,p) => s + (p.attack  || 0), 0);
+  const totDef = players.reduce((s,p) => s + (p.defense || 0), 0);
+  $('ts-atk').textContent   = totAtk;
+  $('ts-def').textContent   = totDef;
+  $('ts-total').textContent = totAtk + totDef;
+
+  if (!players.length) {
+    $('team-tbody').innerHTML =
+      '<tr><td colspan="7"><div class="empty">' +
+        '<div class="empty-title">ZADNI HRACI</div>' +
+        '<div class="empty-sub">NAKUP HRACE NA TRZISTI</div>' +
+      '</div></td></tr>';
+    return;
+  }
+
+  $('team-tbody').innerHTML = players.map((p, i) => {
+    const name     = escHtml(p.name     || '—');
+    const pos      = escHtml(p.position || '—');
+    const safeName = (p.name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const inTrain  = trainingActive[p.id];
+    const actionCell = inTrain
+      ? '<span class="train-badge" id="tbadge-' + p.id + '">TRENUJE...</span>'
+      : '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this)">+1 ATK</button>';
+    return (
+      '<tr id="prow-' + p.id + '">' +
+        '<td class="idx">' + (i + 1) + '</td>' +
+        '<td><strong>' + name + '</strong></td>' +
+        '<td class="hide-m"><span class="pos-badge">' + pos + '</span></td>' +
+        '<td><div class="stat-big atk">' + (p.attack  || 0) + '</div></td>' +
+        '<td><div class="stat-big def">' + (p.defense || 0) + '</div></td>' +
+        '<td class="hide-m"><div class="mv-val">' + (p.market_value || 0) + '</div></td>' +
+        '<td><div class="act-btns">' +
+          actionCell +
+          '<button class="act-btn act-btn-fire" onclick="firePlayer(' + p.id + ',\'' + safeName + '\')">PROPUSTIT</button>' +
+        '</div></td>' +
+      '</tr>'
+    );
+  }).join('');
+}
+
+async function trainPlayer(playerId, btn) {
+  if (trainingActive[playerId]) return;
+  trainingActive[playerId] = true;
+  const cell = btn.closest('.act-btns');
+  cell.innerHTML =
+    '<span class="train-badge" id="tbadge-' + playerId + '">10s...</span>' +
+    '<button class="act-btn act-btn-fire" onclick="firePlayer(' + playerId + ')">PROPUSTIT</button>';
+
+  let secs = 10;
+  const iv = setInterval(() => {
+    secs--;
+    const badge = $('tbadge-' + playerId);
+    if (badge) badge.textContent = secs > 0 ? secs + 's...' : 'HOTOVO!';
+    if (secs <= 0) {
+      clearInterval(iv);
+      delete trainingActive[playerId];
+      setTimeout(loadTeam, 500);
+    }
+  }, 1000);
+
+  // Call API if endpoint exists; ignore errors gracefully
+  try { await apiFetch('POST', '/train', { playerId }); } catch (_) {}
+}
+
+async function firePlayer(playerId, name) {
+  if (!confirm('Opravdu propustit hrace ' + (name || '') + '?')) return;
+  try { await apiFetch('POST', '/fire_player', { playerId }); } catch (_) {}
+  loadTeam();
+}
+
+// ═══════════════════════════════════════════════════
+// MATCH
+// ═══════════════════════════════════════════════════
+async function loadMatch() {
+  if (!teamData.length) {
+    try { teamData = await apiFetch('GET', '/team'); } catch (_) {}
+  }
+  const myAtk = teamData.reduce((s,p) => s + (p.attack  || 0), 0);
+  const myDef = teamData.reduce((s,p) => s + (p.defense || 0), 0);
+
+  $('mh-my-name').textContent = currentUser
+    ? (currentUser.club_name || currentUser.username || '—') : '—';
+  $('mh-my-atk').textContent = myAtk;
+  $('mh-my-def').textContent = myDef;
+
+  // Reset UI
+  $('match-setup').style.display  = '';
+  $('match-result').style.display = 'none';
+  $('match-log').style.display    = 'none';
+  selectedOpp = null;
+  $('bot-btn').style.opacity    = '1';
+  $('match-opp-info').textContent = 'Vyber soupe vpravo nebo hraj proti botovi.';
+  $('match-opp-info').style.color = '';
+  const pb = $('play-btn');
+  pb.disabled = false; pb.textContent = 'ZAHRAT ZAPAS';
+
+  loadOpponents();
+}
+
+async function loadOpponents() {
+  $('opp-loader').classList.add('show');
+  $('opp-list').innerHTML = '';
+  try {
+    const users  = await apiFetch('GET', '/leaderboard');
+    const myName = currentUser ? currentUser.username : null;
+    const others = users.filter(u => u.username !== myName).slice(0, 10);
+    if (!others.length) {
+      $('opp-list').innerHTML = '<div style="font-size:10px;color:var(--mut);letter-spacing:2px;padding:8px 0">Zadni dostupni souperi.</div>';
+    } else {
+      $('opp-list').innerHTML = others.map(u => {
+        const club     = escHtml(u.club_name || u.username);
+        const safeClub = (u.club_name || u.username || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const elo      = u.elo_rating || 1000;
+        return (
+          '<div class="opp-row" id="opp-' + u.id + '" onclick="selectOpponent(' + u.id + ',\'' + safeClub + '\',' + elo + ')">' +
+            '<div><div class="opp-name">' + club + '</div><div class="opp-handle">@' + escHtml(u.username) + '</div></div>' +
+            '<div class="opp-elo">ELO ' + elo + '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+  } catch (_) {
+    $('opp-list').innerHTML = '<div style="font-size:10px;color:var(--mut);letter-spacing:2px;padding:8px 0">Nepodarilo se nacist souperovy.</div>';
+  } finally {
+    $('opp-loader').classList.remove('show');
+  }
+}
+
+function selectOpponent(id, clubName, elo) {
+  selectedOpp = id;
+  document.querySelectorAll('.opp-row').forEach(r => r.classList.remove('sel'));
+  const el = $('opp-' + id);
+  if (el) el.classList.add('sel');
+  $('bot-btn').style.opacity    = '0.4';
+  $('match-opp-info').textContent = 'SOUPE: ' + clubName + ' (ELO ' + elo + ')';
+  $('match-opp-info').style.color = 'var(--or)';
+}
+
+function selectBot() {
+  selectedOpp = null;
+  document.querySelectorAll('.opp-row').forEach(r => r.classList.remove('sel'));
+  $('bot-btn').style.opacity    = '1';
+  $('match-opp-info').textContent = 'Hres proti nahodnemu botovi.';
+  $('match-opp-info').style.color = 'var(--yw)';
+}
+
+async function playMatch() {
+  const btn = $('play-btn');
+  btn.disabled = true; btn.textContent = 'SIMULUJI...';
+  try {
+    const body   = selectedOpp != null ? { away_user_id: selectedOpp } : {};
+    const result = await apiFetch('POST', '/match/play', body);
+
+    // Backend returns:
+    // { score:"2:1", reward:"+100 minci", xp:"+50 XP", elo_diff:"+10", message:"Vyhral jsi!" }
+    // Extract numbers robustly
+    const moneyEarned = parseInt((result.reward   || '').replace(/[^0-9-]/g,'')) || 0;
+    const xpEarned    = parseInt((result.xp        || '').replace(/[^0-9-]/g,'')) || 0;
+    const eloChange   = parseInt((result.elo_diff  || '').replace(/[^0-9-]/g,'')) || 0;
+
+    // Update local cache
+    if (currentUser) {
+      currentUser.money      = (currentUser.money      || 0) + moneyEarned;
+      currentUser.xp         = (currentUser.xp         || 0) + xpEarned;
+      currentUser.elo_rating = (currentUser.elo_rating || 1000) + eloChange;
+      saveUser();
+      syncTopbar();
+    }
+
+    showLastMatchBanner(result);
+    showMatchResult(result, moneyEarned, xpEarned, eloChange);
+  } catch (e) {
+    alert('Chyba: ' + e.message);
+    btn.disabled = false; btn.textContent = 'ZAHRAT ZAPAS';
+  }
+}
+
+function showMatchResult(result, moneyEarned, xpEarned, eloChange) {
+  $('match-setup').style.display = 'none';
+
+  const isWin  = (result.message || '').includes('Vyhr');
+  const isDraw = (result.message || '').includes('Rem');
+
+  $('mr-score').textContent  = result.score || '?';
+  $('mr-result').textContent = isWin ? 'VYHRA' : isDraw ? 'REMIZA' : 'PROHRA';
+  $('mr-money').textContent  = (moneyEarned >= 0 ? '+' : '') + moneyEarned;
+  $('mr-xp').textContent     = (xpEarned    >= 0 ? '+' : '') + xpEarned;
+  $('mr-elo').textContent    = (eloChange   >= 0 ? '+' : '') + eloChange;
+
+  $('match-result').style.display = '';
+  buildMatchLog(result);
+  $('match-log').style.display = '';
+}
+
+function buildMatchLog(result) {
+  const parts    = (result.score || '0:0').split(':');
+  const myGoals  = Math.max(0, parseInt(parts[0]) || 0);
+  const oppGoals = Math.max(0, parseInt(parts[1]) || 0);
+
+  const rand = n => Array.from({length: n}, () => Math.floor(Math.random()*88)+1).sort((a,b)=>a-b);
+  const myMins  = rand(myGoals);
+  const oppMins = rand(oppGoals);
+  const events  = [
+    ...myMins.map(m  => ({m, own: true})),
+    ...oppMins.map(m => ({m, own: false}))
+  ].sort((a,b) => a.m - b.m);
+
+  const row = (min, cls, text) =>
+    '<div class="log-row ' + cls + '"><div class="log-min">' + min + '\'</div><div class="log-dot"></div><div>' + text + '</div></div>';
+
+  let html = row(0, '', 'VYKOP! Zapas zacina.');
+  const sc = [0, 0];
+  events.forEach(ev => {
+    if (ev.own) {
+      sc[0]++;
+      html += row(ev.m, 'goal', '<strong>GOL!</strong> Nas utok proniknul obranou &mdash; ' + sc[0] + ':' + sc[1]);
+    } else {
+      sc[1]++;
+      html += row(ev.m, 'goal-opp', 'Soupe skoruje &mdash; ' + sc[0] + ':' + sc[1]);
+    }
+  });
+
+  const isWin  = (result.message || '').includes('Vyhr');
+  const isDraw = (result.message || '').includes('Rem');
+  const cls    = isWin ? 'win' : isDraw ? '' : 'lose';
+  html += row(90, cls, '<strong>KONEC ZAPASU</strong> &mdash; ' + escHtml(result.message || ''));
+
+  $('match-log-body').innerHTML = html;
+}
+
+function resetMatch() {
+  $('match-result').style.display = 'none';
+  $('match-log').style.display    = 'none';
+  $('match-setup').style.display  = '';
+  selectedOpp = null;
+  document.querySelectorAll('.opp-row').forEach(r => r.classList.remove('sel'));
+  $('bot-btn').style.opacity    = '1';
+  $('match-opp-info').textContent = 'Vyber soupe vpravo nebo hraj proti botovi.';
+  $('match-opp-info').style.color = '';
+  const pb = $('play-btn');
+  pb.disabled = false; pb.textContent = 'ZAHRAT ZAPAS';
+}
+
+// ═══════════════════════════════════════════════════
+// MARKET
+// ═══════════════════════════════════════════════════
+async function loadMarket() {
+  $('market-loader').classList.add('show');
+  $('market-grid').innerHTML = '';
+  try {
+    const players = await apiFetch('GET', '/market');
+    $('market-meta').textContent = players.length + ' HRACU K DISPOZICI';
+    if (!players.length) {
+      $('market-grid').innerHTML =
+        '<div style="grid-column:1/-1"><div class="empty">' +
+          '<div class="empty-title">TRZISTE JE PRAZDNE</div>' +
+          '<div class="empty-sub">ZKUS ZNOVU POZDEJI</div>' +
+        '</div></div>';
+      return;
+    }
+    const myMoney = currentUser ? (currentUser.money || 0) : 0;
+    $('market-grid').innerHTML = players.map(p => {
+      const canBuy  = myMoney >= (p.market_value || 0);
+      const name    = escHtml(p.name     || '—');
+      const pos     = escHtml(p.position || '—');
+      const stam    = p.stamina != null ? p.stamina : '—';
+      return (
+        '<div class="market-card" id="mc-' + p.id + '">' +
+          '<div class="mc-top">' +
+            '<span class="mc-pos">' + pos + '</span>' +
+            '<span class="mc-stam">STA ' + stam + '</span>' +
+          '</div>' +
+          '<div class="mc-name">' + name + '</div>' +
+          '<div class="mc-stats">' +
+            '<div class="mc-stat"><div class="mc-stat-num atk">' + (p.attack  || 0) + '</div><div class="mc-stat-lbl">UTOK</div></div>' +
+            '<div class="mc-stat"><div class="mc-stat-num def">' + (p.defense || 0) + '</div><div class="mc-stat-lbl">OBRANA</div></div>' +
+          '</div>' +
+          '<div class="mc-footer">' +
+            '<div>' +
+              '<div class="mc-price">' + (p.market_value || 0) + '</div>' +
+              '<div class="mc-price-lbl">' + (canBuy ? 'DOSTUPNE' : 'NEDOSTATEK MINCI') + '</div>' +
+            '</div>' +
+            '<button class="buy-btn" onclick="buyPlayer(' + p.id + ',' + (p.market_value || 0) + ')" ' + (canBuy ? '' : 'disabled') + '>' +
+              (canBuy ? 'KOUPIT' : 'NEDOST.') +
+            '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  } catch (e) {
+    $('market-grid').innerHTML =
+      '<div style="grid-column:1/-1;padding:32px;color:var(--rd);font-size:11px;letter-spacing:2px">' +
+      escHtml(e.message) + '</div>';
+  } finally {
+    $('market-loader').classList.remove('show');
+  }
+}
+
+async function buyPlayer(playerId, price) {
+  const card = $('mc-' + playerId);
+  const btn  = card ? card.querySelector('.buy-btn') : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'KUPUJI...'; }
+  try {
+    // Routes.js calls db.query('SELECT buy_player_secure($1,$2)', [userId, playerId])
+    await apiFetch('POST', '/buy_player', { playerId });
+    if (currentUser) {
+      currentUser.money = (currentUser.money || 0) - price;
+      saveUser();
+      syncTopbar();
+    }
+    if (card) {
+      card.style.outline = '2px solid var(--gn)';
+      setTimeout(() => { if (card.parentNode) card.remove(); }, 900);
+    }
+    try { teamData = await apiFetch('GET', '/team'); } catch (_) {}
+  } catch (e) {
+    alert('Chyba: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'KOUPIT'; }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════════
+async function loadLeaderboard() {
+  $('lb-loader').classList.add('show');
+  $('lb-tbl').style.display = 'none';
+  try {
+    const users = await apiFetch('GET', '/leaderboard');
+    renderLeaderboard(users);
+  } catch (e) {
+    $('lb-tbody').innerHTML =
+      '<tr><td colspan="5" style="padding:20px;color:var(--rd);text-align:center">' +
+      escHtml(e.message) + '</td></tr>';
+    $('lb-tbl').style.display = '';
+  } finally {
+    $('lb-loader').classList.remove('show');
+  }
+}
+
+function renderLeaderboard(users) {
+  if (!users || !users.length) {
+    $('lb-tbody').innerHTML =
+      '<tr><td colspan="5"><div class="empty">' +
+        '<div class="empty-title">ZEBRICEK JE PRAZDNY</div>' +
+        '<div class="empty-sub">BUD PRVNI!</div>' +
+      '</div></td></tr>';
+    $('lb-tbl').style.display = '';
+    return;
+  }
+  const sorted = users.slice().sort((a,b) => (b.elo_rating||1000) - (a.elo_rating||1000));
+  const me = currentUser ? currentUser.username : null;
+  $('lb-tbody').innerHTML = sorted.map((u, i) => {
+    const pos    = i + 1;
+    const posC   = pos===1?'p1':pos===2?'p2':pos===3?'p3':'';
+    const isMe   = u.username === me;
+    const club   = escHtml(u.club_name || u.username);
+    const handle = escHtml(u.username);
+    return (
+      '<tr class="' + (isMe ? 'me' : '') + '">' +
+        '<td><div class="lb-pos ' + posC + '">' + pos + '</div></td>' +
+        '<td>' +
+          '<div class="lb-club-name">' + club + (isMe ? ' &laquo;' : '') + '</div>' +
+          '<div class="lb-club-handle">@' + handle + '</div>' +
+        '</td>' +
+        '<td><div class="lb-elo">' + (u.elo_rating || 1000) + '</div></td>' +
+        '<td class="lb-r hide-m" style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--or)">' + (u.level || 1) + '</td>' +
+        '<td class="lb-r hide-m" style="color:var(--yw);font-weight:700">' + (u.money || 0) + '</td>' +
+      '</tr>'
+    );
+  }).join('');
+  $('lb-tbl').style.display = '';
+}
+
+// ═══════════════════════════════════════════════════
+// INIT — auto-login if session stored
+// ═══════════════════════════════════════════════════
+if (token && currentUser) {
+  enterApp();
+}
+</script>
+</body>
+</html>
