@@ -7,29 +7,54 @@ function getRandomInt(min, max) {
 
 const POSITIONS = ['Útočník', 'Záložník', 'Obránce', 'Brankář'];
 
-async function generateRandomPlayer(userId) {
-    // 1. Get random names from DB
+async function getRandomName() {
     const firstNameRes = await db.query('SELECT name FROM first_names ORDER BY RANDOM() LIMIT 1');
     const lastNameRes = await db.query('SELECT name FROM last_names ORDER BY RANDOM() LIMIT 1');
-    
+
     const firstName = firstNameRes.rows[0]?.name || 'Jan';
     const lastName = lastNameRes.rows[0]?.name || 'Novák';
-    const fullName = `${firstName} ${lastName}`;
+    return `${firstName} ${lastName}`;
+}
 
-    // 2. Generate stats (10-100)
-    const att = getRandomInt(10, 50); // Startovní hráči jsou slabší
-    const def = getRandomInt(10, 50);
+async function generateRandomPlayer(userId) {
+    const fullName = await getRandomName();
+
+    const att = getRandomInt(10, 100);
+    const def = getRandomInt(10, 100);
     const position = POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
 
-    // 3. Calculate market value
     const marketValue = (att + def) * 10;
 
-    // 4. Insert into DB
     await db.query(
         `INSERT INTO players (user_id, name, position, attack, defense, market_value, status) 
          VALUES ($1, $2, $3, $4, $5, $6, 'IN_TEAM')`,
         [userId, fullName, position, att, def, marketValue]
     );
+}
+
+async function generateMarketPlayer() {
+    const fullName = await getRandomName();
+    const att = getRandomInt(10, 100);
+    const def = getRandomInt(10, 100);
+    const position = POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
+    const marketValue = (att + def) * 10;
+
+    await db.query(
+        `INSERT INTO players (user_id, name, position, attack, defense, market_value, status)
+         VALUES (NULL, $1, $2, $3, $4, $5, 'ON_MARKET')`,
+        [fullName, position, att, def, marketValue]
+    );
+}
+
+async function ensureMarketPlayers(minCount) {
+    const countRes = await db.query(
+        "SELECT COUNT(*)::int AS count FROM players WHERE status = 'ON_MARKET' AND user_id IS NULL"
+    );
+    const current = countRes.rows[0]?.count || 0;
+    const toCreate = Math.max(0, (minCount || 0) - current);
+    for (let i = 0; i < toCreate; i++) {
+        await generateMarketPlayer();
+    }
 }
 
 async function generateStartingEleven(userId) {
@@ -39,5 +64,6 @@ async function generateStartingEleven(userId) {
 }
 
 module.exports = {
-    generateStartingEleven
+    generateStartingEleven,
+    ensureMarketPlayers
 };

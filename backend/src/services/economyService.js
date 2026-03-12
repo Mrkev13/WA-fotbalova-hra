@@ -11,22 +11,12 @@ function getStartingCapital() {
 
 
 function getMatchReward(isWin) {
-    // Pokud je remíza (isWin je null/undefined, nebo musíme upravit logiku volání)
-    // Ale v routes.js se volá getMatchReward(true) nebo (false). 
-    // Pro remízu se volalo getMatchReward(false) -> 20.
-    // Zde bychom měli přidat i remízu.
-    // Pro zachování zpětné kompatibility s routes.js zatím necháme, 
-    // ale ideálně bychom měli mít getMoneyReward(resultType).
-    // Dle zadání "načítat z economy_config.json"
-    
-    // Rychlá oprava pro stávající volání (true/false) - ale routes.js budu měnit.
-    // Takže udělám novou metodu.
     return isWin ? economyConfig.vyhra_v_zapase : economyConfig.prohra_v_zapase;
 }
 
 function getMatchMoneyReward(result) {
     if (result === 'win') return economyConfig.vyhra_v_zapase;
-    if (result === 'draw') return 20; // Defaultní hodnota pro remízu, pokud není v configu
+    if (result === 'draw') return economyConfig.remiza_v_zapase;
     return economyConfig.prohra_v_zapase;
 }
 

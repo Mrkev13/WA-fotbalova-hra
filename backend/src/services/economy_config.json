@@ -2,6 +2,7 @@
     "registrace_startovni_kapital": 1000,
     "vyhra_v_zapase": 100,
     "prohra_v_zapase": 20,
+    "remiza_v_zapase": 20,
     "nakup_hrace": {
         "min_cena": 200,
         "max_cena": 1000,

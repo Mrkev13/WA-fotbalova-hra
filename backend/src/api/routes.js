@@ -8,6 +8,33 @@ const playerService = require('../services/playerService');
 const matchService = require('../services/matchService');
 const economyService = require('../services/economyService');
 
+async function ensureBotUserId() {
+    const existing = await db.query(
+        "SELECT id FROM users WHERE username = $1 OR club_name = $2 LIMIT 1",
+        ['BOT', 'BOT']
+    );
+    if (existing.rows.length > 0) return existing.rows[0].id;
+
+    const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+
+    try {
+        const inserted = await db.query(
+            `INSERT INTO users (username, password_hash, club_name, money, xp, level, elo_rating)
+             VALUES ($1, $2, $3, 0, 0, 1, 1000)
+             RETURNING id`,
+            ['BOT', passwordHash, 'BOT']
+        );
+        return inserted.rows[0].id;
+    } catch (_) {
+        const fallback = await db.query(
+            "SELECT id FROM users WHERE username = $1 OR club_name = $2 LIMIT 1",
+            ['BOT', 'BOT']
+        );
+        if (fallback.rows.length > 0) return fallback.rows[0].id;
+        throw _;
+    }
+}
+
 // --- MIDDLEWARE PRO OVĚŘENÍ TOKENU ---
 const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -106,8 +133,22 @@ router.get('/team', authenticateToken, async (req, res) => {
 // 4. TRH HRÁČŮ (/api/market)
 router.get('/market', authenticateToken, async (req, res) => {
     try {
-        // Zobrazí hráče, kteří jsou na trhu nebo nemají majitele
-        const result = await db.query("SELECT * FROM players WHERE status = 'ON_MARKET' OR user_id IS NULL");
+        await playerService.ensureMarketPlayers(20);
+        const result = await db.query("SELECT * FROM players WHERE status = 'ON_MARKET' AND user_id IS NULL ORDER BY market_value DESC");
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/leaderboard', authenticateToken, async (req, res) => {
+    try {
+        const result = await db.query(
+            `SELECT id, username, club_name, money, level, elo_rating
+             FROM users
+             WHERE username != 'BOT'
+             ORDER BY elo_rating DESC, level DESC, xp DESC, created_at ASC`
+        );
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -144,9 +185,10 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         if (myTeam.length < 11) return res.status(400).json({ error: "Musíš mít alespoň 11 hráčů v týmu!" });
 
         let opponentTeam = [];
-        let opponentId = away_user_id || 0; // Pokud není zadán soupeř, ID 0 (bot)
+        const opponentIsBot = away_user_id == null;
+        let opponentId = opponentIsBot ? await ensureBotUserId() : away_user_id;
 
-        if (opponentId !== 0) {
+        if (!opponentIsBot) {
             // Načtení soupeřova týmu z DB
             const oppTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [opponentId]);
             opponentTeam = oppTeamRes.rows;
@@ -190,7 +232,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         );
         
         // Pokud je soupeř reálný hráč, upravíme mu ELO (zjednodušeně)
-        if (opponentId !== 0) {
+        if (!opponentIsBot) {
              await db.query(
                 `UPDATE users SET elo_rating = elo_rating - $1 WHERE id = $2`, 
                 [eloChange, opponentId]
