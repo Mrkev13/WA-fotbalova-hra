@@ -16,12 +16,12 @@ async function getRandomName() {
     return `${firstName} ${lastName}`;
 }
 
-async function generateRandomPlayer(userId) {
+async function generateRandomPlayer(userId, positionOverride) {
     const fullName = await getRandomName();
 
     const att = getRandomInt(10, 100);
     const def = getRandomInt(10, 100);
-    const position = POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
+    const position = positionOverride || POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
 
     const marketValue = (att + def) * 10;
 
@@ -58,8 +58,15 @@ async function ensureMarketPlayers(minCount) {
 }
 
 async function generateStartingEleven(userId) {
+    const formation = [
+        'Brankář',
+        'Obránce', 'Obránce', 'Obránce', 'Obránce',
+        'Záložník', 'Záložník', 'Záložník', 'Záložník',
+        'Útočník', 'Útočník'
+    ];
+
     for (let i = 0; i < 11; i++) {
-        await generateRandomPlayer(userId);
+        await generateRandomPlayer(userId, formation[i]);
     }
 }
 

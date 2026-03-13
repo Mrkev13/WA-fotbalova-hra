@@ -62,6 +62,8 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
+const authenticateSession = authenticateToken;
+
 // ==========================================
 // 1. REGISTRACE (/api/register)
 // ==========================================
@@ -155,12 +157,93 @@ router.get('/leaderboard', authenticateToken, async (req, res) => {
     }
 });
 
+router.post('/train', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const { playerId, statType } = req.body;
+
+    const allowed = { attack: 'attack', defense: 'defense' };
+    const column = allowed[statType];
+    if (!column) return res.status(400).json({ error: "Neplatný typ vylepšení. Použij 'attack' nebo 'defense'." });
+    if (!playerId) return res.status(400).json({ error: "Chybí playerId." });
+
+    const trainingCost = 50;
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+
+        const moneyRes = await client.query('SELECT money FROM users WHERE id = $1 FOR UPDATE', [userId]);
+        if (moneyRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: "Uživatel nenalezen." });
+        }
+        if ((moneyRes.rows[0].money || 0) < trainingCost) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: "Nemáš dostatek peněz (min. 50 mincí)." });
+        }
+
+        const playerRes = await client.query(
+            `SELECT ${column} FROM players WHERE id = $1 AND user_id = $2 FOR UPDATE`,
+            [playerId, userId]
+        );
+        if (playerRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: "Hráč nenalezen." });
+        }
+        if ((playerRes.rows[0][column] || 0) >= 100) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: "Stat je už na maximu (100)." });
+        }
+
+        await client.query('UPDATE users SET money = money - $1 WHERE id = $2', [trainingCost, userId]);
+        const updated = await client.query(
+            `UPDATE players SET ${column} = ${column} + 1 WHERE id = $1 AND user_id = $2 RETURNING ${column} AS value`,
+            [playerId, userId]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: "Trénink proběhl úspěšně.", stat: statType, newValue: updated.rows[0]?.value });
+    } catch (error) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        res.status(500).json({ error: error.message });
+    } finally {
+        client.release();
+    }
+});
+
+router.post('/fire_player', authenticateSession, async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        
+        const result = await db.query(
+            "DELETE FROM players WHERE id = $1 AND user_id = $2 RETURNING id",
+            [playerId, req.user.id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Hráč nenalezen nebo nepatří tvému týmu." });
+        }
+
+        res.json({ message: "Hráč byl úspěšně propuštěn z týmu." });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // 5. NÁKUP HRÁČE (/api/buy_player)
 router.post('/buy_player', authenticateToken, async (req, res) => {
     const { playerId } = req.body;
     const userId = req.user.id;
 
     try {
+        const countRes = await db.query(
+            "SELECT COUNT(*)::int AS count FROM players WHERE user_id = $1 AND status = 'IN_TEAM'",
+            [userId]
+        );
+        const inTeamCount = countRes.rows[0]?.count || 0;
+        if (inTeamCount >= 11) {
+            return res.status(400).json({ error: "Máš plný tým (11 hráčů)! Musíš někoho propustit nebo prodat na trh, abys mohl koupit nového." });
+        }
+
         // Použití bezpečné DB funkce
         await db.query('SELECT buy_player_secure($1, $2)', [userId, playerId]);
 
@@ -182,10 +265,15 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         const myTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [userId]);
         const myTeam = myTeamRes.rows;
         
-        if (myTeam.length < 11) return res.status(400).json({ error: "Musíš mít alespoň 11 hráčů v týmu!" });
+        if (myTeam.length !== 11) {
+            return res.status(400).json({ error: "Pro zahájení zápasu musíš mít v aktivním týmu přesně 11 hráčů!" });
+        }
+
+        const myAttackTotal = myTeam.reduce((sum, p) => sum + (p.attack || 0), 0);
+        const myDefenseTotal = myTeam.reduce((sum, p) => sum + (p.defense || 0), 0);
 
         let opponentTeam = [];
-        const opponentIsBot = away_user_id == null;
+        let opponentIsBot = away_user_id == null;
         let opponentId = opponentIsBot ? await ensureBotUserId() : away_user_id;
 
         if (!opponentIsBot) {
@@ -193,17 +281,22 @@ router.post('/match/play', authenticateToken, async (req, res) => {
             const oppTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [opponentId]);
             opponentTeam = oppTeamRes.rows;
             
-            if (opponentTeam.length < 11) {
-                // Fallback nebo error - zde zvolíme error, pokud chceme validní zápas
+            if (opponentTeam.length === 0) {
+                opponentIsBot = true;
+            } else if (opponentTeam.length !== 11) {
                 return res.status(400).json({ error: "Soupeř nemá kompletní tým!" });
             }
-        } else {
-            // Generování náhodného týmu (pro testování nebo PvE) - použijeme starou logiku, ale musíme ji mít dostupnou
-            // Protože playerService.generateStartingEleven nově ukládá do DB, musíme si zde vygenerovat jen "staty" v paměti
-            // Pro jednoduchost zde vytvoříme dummy tým
-             for(let i=0; i<11; i++) {
-                opponentTeam.push({ attack: Math.floor(Math.random() * 40) + 10, defense: Math.floor(Math.random() * 40) + 10 });
-            }
+        }
+
+        if (opponentIsBot) {
+            const factor = 0.8 + (Math.random() * 0.4);
+            const botAttackTotal = Math.max(110, Math.round(myAttackTotal * factor));
+            const botDefenseTotal = Math.max(110, Math.round(myDefenseTotal * factor));
+
+            const baseAttack = Math.max(10, Math.min(100, Math.floor(botAttackTotal / 11)));
+            const baseDefense = Math.max(10, Math.min(100, Math.floor(botDefenseTotal / 11)));
+
+            opponentTeam = Array.from({ length: 11 }, () => ({ attack: baseAttack, defense: baseDefense }));
         }
 
         // Simulace
@@ -226,10 +319,17 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         );
 
         // Update uživatele (peníze, XP, ELO)
-        await db.query(
-            `UPDATE users SET money = money + $1, xp = xp + $2, elo_rating = elo_rating + $3 WHERE id = $4`, 
+        const updatedUserRes = await db.query(
+            `UPDATE users 
+             SET money = money + $1, xp = xp + $2, elo_rating = elo_rating + $3 
+             WHERE id = $4
+             RETURNING xp`, 
             [moneyReward, xpReward, eloChange, userId]
         );
+
+        const xpTotal = updatedUserRes.rows[0]?.xp || 0;
+        const newLevel = Math.floor(xpTotal / 100) + 1;
+        await db.query('UPDATE users SET level = $1 WHERE id = $2', [newLevel, userId]);
         
         // Pokud je soupeř reálný hráč, upravíme mu ELO (zjednodušeně)
         if (!opponentIsBot) {

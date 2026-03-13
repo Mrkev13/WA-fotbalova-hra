@@ -1,10 +1,9 @@
 
 function simulateAction(attackTotal, defenseTotal) {
-    const R = (Math.random() * 0.2) - 0.1; 
-    
-    const modifiedAttack = attackTotal + (attackTotal * R);
-    
-    return modifiedAttack > defenseTotal; // Vrátí true (gól) nebo false (nic)
+    if (attackTotal === 0 && defenseTotal === 0) return Math.random() > 0.5;
+    const scoreChance = attackTotal / (attackTotal + defenseTotal);
+    const finalChance = Math.max(0.1, Math.min(0.9, scoreChance));
+    return Math.random() < finalChance;
 }
 
 
