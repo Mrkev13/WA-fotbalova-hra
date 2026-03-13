@@ -217,7 +217,7 @@ router.post('/train', authenticateToken, async (req, res) => {
 
         await client.query('UPDATE users SET money = money - $1 WHERE id = $2', [trainingCost, userId]);
         const updated = await client.query(
-            `UPDATE players SET ${column} = ${column} + 1 WHERE id = $1 AND user_id = $2 RETURNING ${column} AS value`,
+            `UPDATE players SET ${column} = ${column} + 1, market_value = market_value + 10 WHERE id = $1 AND user_id = $2 RETURNING ${column} AS value`,
             [playerId, userId]
         );
 
