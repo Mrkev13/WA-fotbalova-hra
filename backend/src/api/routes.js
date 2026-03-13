@@ -114,7 +114,18 @@ router.post('/login', async (req, res) => {
             [user.id, token, expiresAt]
         );
 
-        res.json({ token, message: "Úspěšné přihlášení", user: { username: user.username, money: user.money, level: user.level } });
+        res.json({ 
+            token, 
+            message: "Úspěšné přihlášení", 
+            user: { 
+                id: user.id, 
+                username: user.username, 
+                money: user.money, 
+                level: user.level, 
+                elo_rating: user.elo_rating, 
+                xp: user.xp 
+            } 
+        }); 
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -311,12 +322,31 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         const xpReward = economyService.getMatchXPReward(resultType);
         const eloChange = economyService.getMatchEloReward(resultType);
 
-        // Zápis zápasu
-        await db.query(
+        const matchRes = await db.query(
             `INSERT INTO matches (home_user_id, away_user_id, score_home, score_away) 
-             VALUES ($1, $2, $3, $4)`,
-            [userId, opponentId, matchResult.myGoals, matchResult.opponentGoals]
-        );
+             VALUES ($1, $2, $3, $4) RETURNING id`, 
+            [userId, opponentId, matchResult.myGoals, matchResult.opponentGoals] 
+        ); 
+        const matchId = matchRes.rows[0].id; 
+ 
+        let events = []; 
+        const getRandMinute = () => Math.floor(Math.random() * 89) + 1; 
+         
+        for (let i = 0; i < matchResult.myGoals; i++) { 
+            events.push({ match_id: matchId, minute: getRandMinute(), event_type: 'GOAL', description: 'Gól domácích!' }); 
+        } 
+        for (let i = 0; i < matchResult.opponentGoals; i++) { 
+            events.push({ match_id: matchId, minute: getRandMinute(), event_type: 'GOAL', description: 'Gól soupeře!' }); 
+        } 
+         
+        events.sort((a, b) => a.minute - b.minute); 
+ 
+        for (const ev of events) { 
+            await db.query( 
+                `INSERT INTO match_events (match_id, minute, event_type, description) VALUES ($1, $2, $3, $4)`, 
+                [ev.match_id, ev.minute, ev.event_type, ev.description] 
+            ); 
+        } 
 
         // Update uživatele (peníze, XP, ELO)
         const updatedUserRes = await db.query(
@@ -344,7 +374,8 @@ router.post('/match/play', authenticateToken, async (req, res) => {
             reward: `+${moneyReward} mincí`,
             xp: `+${xpReward} XP`,
             elo_diff: `${eloChange > 0 ? '+' : ''}${eloChange}`,
-            message: isWin ? "Vyhrál jsi!" : (isDraw ? "Remíza!" : "Prohrál jsi!")
+            message: isWin ? "Vyhrál jsi!" : (isDraw ? "Remíza!" : "Prohrál jsi!"),
+            events: events
         });
 
     } catch (error) {
