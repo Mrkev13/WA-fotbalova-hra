@@ -82,3 +82,18 @@ A databáze si **sama, bezpečně a atomicky** vyřeší:
 Pokud nemá kupující peníze nebo hráč neexistuje, tato funkce rovnou hodí přehledný **SQL Error/Exception** (např. *'Nedostatek peněz na účtu.'*), který jen odchytíš ve svém backend (try/catch) a pošleš na frontend jako 400 Bad Request.
 
 Good luck! 🚀
+
+---
+
+## 6. 🛠️ Aktuální opravy (stav k 13.03.)
+
+**Pro @Hamudy: Tyto chyby v DB jsem už opravil, takže v tvém kódu by to mělo přestat padat:**
+
+1.  **Chyba #6 (Nákup hráče)**: SQL funkce `buy_player_secure` už nehlásí chybu ohledně `user_id`. Můžeš ji normálně volat.
+2.  **Chyba #8 (Zápas proti botovi)**: V databázi je už vytvořen **Bot s ID 0**. Pokud tvůj backend při zápase proti botovi pošle `away_user_id = 0`, už to nebude padat na chybu cizího klíče (FK constraint).
+
+**Na co se musíš podívat ty:**
+*   **Issue #9 (ELO reset na 1000)**: V databázi ELO máme, ale tvůj login endpoint ho neposílá na frontend. Přidej `elo_rating` a `xp` do JSON odpovědi při `/api/login`.
+*   **Issue #8 (Průběh zápasu)**: Zápas už nespadne (díky ID 0), ale zatím v něm neběží žádná logika událostí. Pokud chceš, aby se v UI "něco dělo", musíš po simulaci naplnit tabulku `match_events` nebo poslat data v odpovědi API.
+
+GOAT out. ✌️
