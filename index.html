@@ -24,12 +24,16 @@
       <div class="f-group">
         <label class="f-label" for="li-user">Uzivatelske jmeno</label>
         <input class="f-input" id="li-user" type="text" placeholder="manager123"
-               autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+               autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"
+               oninput="clearFieldErr('li-user','ferr-li-user')">
+        <div class="field-err" id="ferr-li-user"></div>
       </div>
       <div class="f-group">
         <label class="f-label" for="li-pass">Heslo</label>
         <input class="f-input" id="li-pass" type="password" placeholder="••••••••"
-               autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+               autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"
+               oninput="clearFieldErr('li-pass','ferr-li-pass')">
+        <div class="field-err" id="ferr-li-pass"></div>
       </div>
       <button class="btn btn-primary" id="btn-login" onclick="doLogin()">PRIHLASIT SE</button>
       <div class="msg" id="msg-login"></div>
@@ -37,18 +41,24 @@
 
     <div class="login-form" id="form-reg" style="display:none">
       <div class="f-group">
-        <label class="f-label" for="re-user">Uzivatelske jmeno</label>
+        <label class="f-label" for="re-user">Uzivatelske jmeno <span style="color:var(--mut);font-weight:400">(min. 3 znaky)</span></label>
         <input class="f-input" id="re-user" type="text" placeholder="manager123"
-               autocomplete="username">
+               autocomplete="username"
+               oninput="validateRegField('re-user','ferr-re-user',3,'Min. 3 znaky')">
+        <div class="field-err" id="ferr-re-user"></div>
       </div>
       <div class="f-group">
-        <label class="f-label" for="re-club">Nazev klubu</label>
-        <input class="f-input" id="re-club" type="text" placeholder="FC Hvezdicky">
+        <label class="f-label" for="re-club">Nazev klubu <span style="color:var(--mut);font-weight:400">(min. 3 znaky)</span></label>
+        <input class="f-input" id="re-club" type="text" placeholder="FC Hvezdicky"
+               oninput="validateRegField('re-club','ferr-re-club',3,'Min. 3 znaky')">
+        <div class="field-err" id="ferr-re-club"></div>
       </div>
       <div class="f-group">
-        <label class="f-label" for="re-pass">Heslo</label>
+        <label class="f-label" for="re-pass">Heslo <span style="color:var(--mut);font-weight:400">(min. 6 znaku)</span></label>
         <input class="f-input" id="re-pass" type="password" placeholder="••••••••"
-               autocomplete="new-password">
+               autocomplete="new-password"
+               oninput="validateRegField('re-pass','ferr-re-pass',6,'Min. 6 znaku')">
+        <div class="field-err" id="ferr-re-pass"></div>
       </div>
       <button class="btn btn-primary" id="btn-reg" onclick="doRegister()">REGISTROVAT SE</button>
       <div class="msg" id="msg-reg"></div>
@@ -62,7 +72,7 @@
 <div id="s-app" class="screen">
 
   <div class="topbar">
-    <div class="tb-logo">PF<span>:</span>T</div>
+    <div class="tb-logo" title="Pixel Football Tycoon">PF<span>:</span>T<div class="tb-logo-sub">PIXEL FOOTBALL</div></div>
     <div class="tb-club"><div class="tb-club-name" id="tb-club"></div></div>
     <div class="tb-stats">
       <div class="tb-stat">
@@ -264,6 +274,8 @@
 
 </div><!-- /#s-app -->
 
+<div id="toast-container"></div>
+
 <script>
 // ═══════════════════════════════════════════════════
 // CONFIG
@@ -301,6 +313,52 @@ function escHtml(s) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Toast notifikace — zobrazí se dole na obrazovce a zmizi po 4s
+function toast(type, text) {
+  const container = $('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = text;
+  container.appendChild(el);
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+}
+
+// Inline validace pole pri psani
+function validateRegField(inputId, errId, minLen, errText) {
+  const input = $(inputId);
+  const errEl = $(errId);
+  const val = input.value;
+  if (val.length > 0 && val.length < minLen) {
+    input.classList.add('invalid');
+    input.classList.remove('valid');
+    errEl.textContent = errText;
+    errEl.classList.add('show');
+  } else if (val.length >= minLen) {
+    input.classList.remove('invalid');
+    input.classList.add('valid');
+    errEl.classList.remove('show');
+  } else {
+    input.classList.remove('invalid','valid');
+    errEl.classList.remove('show');
+  }
+}
+
+// Vymazat chybu pri focusu/psani
+function clearFieldErr(inputId, errId) {
+  const input = $(inputId);
+  const errEl = $(errId);
+  if (input) { input.classList.remove('invalid'); }
+  if (errEl) { errEl.classList.remove('show'); }
+}
+
+// Oznacit pole jako chybne
+function showFieldErr(inputId, errId, text) {
+  const input = $(inputId);
+  const errEl = $(errId);
+  if (input) { input.classList.add('invalid'); input.focus(); }
+  if (errEl) { errEl.textContent = text; errEl.classList.add('show'); }
+}
+
 // ═══════════════════════════════════════════════════
 // API WRAPPER
 // ═══════════════════════════════════════════════════
@@ -333,20 +391,41 @@ function switchTab(tab) {
 async function doLogin() {
   const username = $('li-user').value.trim();
   const password = $('li-pass').value;
-  if (!username || !password) { setMsg('msg-login','err','Vyplnte vsechna pole.'); return; }
+
+  // Validace
+  if (!username) {
+    showFieldErr('li-user', 'ferr-li-user', 'Zadejte uzivatelske jmeno.');
+    setMsg('msg-login','err','Vyplnte vsechna pole.');
+    return;
+  }
+  if (!password) {
+    showFieldErr('li-pass', 'ferr-li-pass', 'Zadejte heslo.');
+    setMsg('msg-login','err','Vyplnte vsechna pole.');
+    return;
+  }
+
   clearMsg('msg-login');
   const btn = $('btn-login');
   btn.disabled = true; btn.textContent = 'PRIHLASOVANI...';
   try {
     const data = await apiFetch('POST', '/login', { username, password });
-    // Backend returns: { token, message, user: { username, money, level } }
     token = data.token;
     currentUser = Object.assign({ username }, data.user || {});
     localStorage.setItem('pft_token', token);
     localStorage.setItem('pft_user', JSON.stringify(currentUser));
     enterApp();
   } catch (e) {
-    setMsg('msg-login','err', e.message);
+    const msg = e.message;
+    // Backend přesné texty: "Uživatel nenalezen" a "Špatné heslo"
+    if (msg.includes('nenalezen') || msg.includes('not found')) {
+      showFieldErr('li-user', 'ferr-li-user', 'Uzivatel neexistuje.');
+      setMsg('msg-login','err','Uzivatel s timto jmenem neexistuje.');
+    } else if (msg.includes('heslo') || msg.includes('password') || msg.includes('Špatné')) {
+      showFieldErr('li-pass', 'ferr-li-pass', 'Spatne heslo.');
+      setMsg('msg-login','err','Spatne heslo. Zkuste to znovu.');
+    } else {
+      setMsg('msg-login','err', msg);
+    }
     btn.disabled = false; btn.textContent = 'PRIHLASIT SE';
   }
 }
@@ -355,7 +434,33 @@ async function doRegister() {
   const username  = $('re-user').value.trim();
   const club_name = $('re-club').value.trim();
   const password  = $('re-pass').value;
-  if (!username || !club_name || !password) { setMsg('msg-reg','err','Vyplnte vsechna pole.'); return; }
+
+  // Kontrola prazdnych poli
+  if (!username || !club_name || !password) {
+    if (!username) showFieldErr('re-user','ferr-re-user','Pole je povinne.');
+    if (!club_name) showFieldErr('re-club','ferr-re-club','Pole je povinne.');
+    if (!password) showFieldErr('re-pass','ferr-re-pass','Pole je povinne.');
+    setMsg('msg-reg','err','Vyplnte vsechna pole.');
+    return;
+  }
+
+  // Validace delky
+  if (username.length < 3) {
+    showFieldErr('re-user','ferr-re-user','Min. 3 znaky.');
+    setMsg('msg-reg','err','Uzivatelske jmeno musi mit alespon 3 znaky.');
+    return;
+  }
+  if (club_name.length < 3) {
+    showFieldErr('re-club','ferr-re-club','Min. 3 znaky.');
+    setMsg('msg-reg','err','Nazev klubu musi mit alespon 3 znaky.');
+    return;
+  }
+  if (password.length < 6) {
+    showFieldErr('re-pass','ferr-re-pass','Min. 6 znaku.');
+    setMsg('msg-reg','err','Heslo musi mit alespon 6 znaku.');
+    return;
+  }
+
   clearMsg('msg-reg');
   const btn = $('btn-reg');
   btn.disabled = true; btn.textContent = 'REGISTRACE...';
@@ -369,7 +474,20 @@ async function doRegister() {
       await doLogin();
     }, 800);
   } catch (e) {
-    setMsg('msg-reg','err', e.message);
+    const msg = e.message;
+    // PostgreSQL unique violation: "duplicate key value violates unique constraint"
+    if (msg.toLowerCase().includes('duplicate key') || msg.toLowerCase().includes('unique')) {
+      // Rozlišit jestli jde o username nebo club_name
+      if (msg.includes('club_name') || msg.includes('club')) {
+        showFieldErr('re-club','ferr-re-club','Nazev klubu je jiz obsazen.');
+        setMsg('msg-reg','err','Tento nazev klubu uz pouziva jiny hrac. Zvolte jiny.');
+      } else {
+        showFieldErr('re-user','ferr-re-user','Jmeno je jiz obsazeno.');
+        setMsg('msg-reg','err','Toto uzivatelske jmeno je jiz obsazeno. Zvolte jine.');
+      }
+    } else {
+      setMsg('msg-reg','err', msg);
+    }
     btn.disabled = false; btn.textContent = 'REGISTROVAT SE';
   }
 }
@@ -501,8 +619,7 @@ function renderTeam(players) {
     const inTrain  = trainingActive[p.id];
     const actionCell = inTrain
       ? '<span class="train-badge" id="tbadge-' + p.id + '">TRENUJE...</span>'
-      : '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this,\'attack\')">+1 ATK</button>' +
-        '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this,\'defense\')">+1 DEF</button>';
+      : '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this)">+1 ATK</button>';
     return (
       '<tr id="prow-' + p.id + '">' +
         '<td class="idx">' + (i + 1) + '</td>' +
@@ -520,38 +637,55 @@ function renderTeam(players) {
   }).join('');
 }
 
-async function trainPlayer(playerId, btn, statType) {
+async function trainPlayer(playerId, btn) {
   if (trainingActive[playerId]) return;
+
+  // Backend vyžaduje playerId + statType ('attack' nebo 'defense')
+  // Tlačítko "+1 ATK" vždy trénuje attack
+  const statType = 'attack';
+
   trainingActive[playerId] = true;
   const cell = btn.closest('.act-btns');
   cell.innerHTML =
-    '<span class="train-badge" id="tbadge-' + playerId + '">10s...</span>' +
+    '<span class="train-badge" id="tbadge-' + playerId + '">ODESILAIM...</span>' +
     '<button class="act-btn act-btn-fire" onclick="firePlayer(' + playerId + ')">PROPUSTIT</button>';
 
-  let secs = 10;
-  const iv = setInterval(() => {
-    secs--;
-    const badge = $('tbadge-' + playerId);
-    if (badge) badge.textContent = secs > 0 ? secs + 's...' : 'HOTOVO!';
-    if (secs <= 0) {
-      clearInterval(iv);
-      delete trainingActive[playerId];
-      setTimeout(loadTeam, 500);
-    }
-  }, 1000);
-
   try {
-      await apiFetch('POST', '/train', { playerId, statType });
-      if (currentUser) {
-          currentUser.money -= 50;
-          saveUser();
-          syncTopbar();
+    // Zavolat API - backend strhne 50 mincí a zvýší stat o 1
+    await apiFetch('POST', '/train', { playerId, statType });
+
+    // API uspělo - zobrazit odpočet (informační, stat je už uložen v DB)
+    let secs = 10;
+    const badge = $('tbadge-' + playerId);
+    if (badge) badge.textContent = secs + 's...';
+
+    const iv = setInterval(() => {
+      secs--;
+      const b = $('tbadge-' + playerId);
+      if (b) b.textContent = secs > 0 ? secs + 's...' : 'HOTOVO!';
+      if (secs <= 0) {
+        clearInterval(iv);
+        delete trainingActive[playerId];
+        setTimeout(loadTeam, 400);
       }
+    }, 1000);
+
+    // Strhnout mince z lokálního stavu
+    if (currentUser) {
+      currentUser.money = Math.max(0, (currentUser.money || 0) - 50);
+      saveUser();
+      syncTopbar();
+    }
+
+    toast('ok', 'Trenink zahajen! -50 minci');
+
   } catch (e) {
-      alert("Chyba při tréninku: " + e.message);
-      clearInterval(iv);
-      delete trainingActive[playerId];
-      loadTeam();
+    // API selhalo - zobrazit chybu, resetovat tlačítko
+    delete trainingActive[playerId];
+    cell.innerHTML =
+      '<button class="act-btn act-btn-train" onclick="trainPlayer(' + playerId + ',this)">+1 ATK</button>' +
+      '<button class="act-btn act-btn-fire" onclick="firePlayer(' + playerId + ')">PROPUSTIT</button>';
+    toast('err', e.message);
   }
 }
 
@@ -570,22 +704,34 @@ async function loadMatch() {
   }
   const myAtk = teamData.reduce((s,p) => s + (p.attack  || 0), 0);
   const myDef = teamData.reduce((s,p) => s + (p.defense || 0), 0);
+  const playerCount = teamData.length;
 
   $('mh-my-name').textContent = currentUser
     ? (currentUser.club_name || currentUser.username || '—') : '—';
   $('mh-my-atk').textContent = myAtk;
   $('mh-my-def').textContent = myDef;
 
+  // Varování pokud hráč nemá přesně 11 hráčů (backend to vyžaduje)
+  const playBtn = $('play-btn');
+  if (playerCount !== 11) {
+    playBtn.disabled = true;
+    $('match-opp-info').textContent =
+      'Mas ' + playerCount + ' hracu. Pro zapas potrebujes presne 11. ' +
+      (playerCount < 11 ? 'Nakup hrace na trzisti.' : 'Propust ' + (playerCount - 11) + ' hrace.');
+    $('match-opp-info').style.color = 'var(--rd)';
+  } else {
+    playBtn.disabled = false;
+    $('match-opp-info').textContent = 'Vyber soupe vpravo nebo hraj proti botovi.';
+    $('match-opp-info').style.color = '';
+  }
+
   // Reset UI
   $('match-setup').style.display  = '';
   $('match-result').style.display = 'none';
   $('match-log').style.display    = 'none';
   selectedOpp = null;
-  $('bot-btn').style.opacity    = '1';
-  $('match-opp-info').textContent = 'Vyber soupe vpravo nebo hraj proti botovi.';
-  $('match-opp-info').style.color = '';
-  const pb = $('play-btn');
-  pb.disabled = false; pb.textContent = 'ZAHRAT ZAPAS';
+  $('bot-btn').style.opacity = '1';
+  playBtn.textContent = 'ZAHRAT ZAPAS';
 
   loadOpponents();
 }
@@ -640,22 +786,30 @@ function selectBot() {
 async function playMatch() {
   const btn = $('play-btn');
   btn.disabled = true; btn.textContent = 'SIMULUJI...';
+
+  // Vizualni feedback - kratke cekani aby uzivatel videl ze se neco deje
+  $('match-opp-info').textContent = 'Zapas probiha...';
+  $('match-opp-info').style.color = 'var(--yw)';
+
   try {
-    const body   = selectedOpp != null ? { away_user_id: selectedOpp } : {};
+    // Pro bota posílame prázdné tělo - backend to akceptuje (away_user_id = 0 nebo chybí = bot)
+    const body = (selectedOpp != null) ? { away_user_id: selectedOpp } : {};
     const result = await apiFetch('POST', '/match/play', body);
 
-    // Backend returns:
-    // { score:"2:1", reward:"+100 minci", xp:"+50 XP", elo_diff:"+10", message:"Vyhral jsi!" }
-    // Extract numbers robustly
+    // Backend vrací: { score:"2:1", reward:"+100 minci", xp:"+50 XP", elo_diff:"+10", message:"Vyhral jsi!" }
+    if (!result || !result.score) {
+      throw new Error('Server vratil neplatnou odpoved. Zkuste to znovu.');
+    }
+
+    // Robustni parsovani cisel ze stringu jako "+100 minci", "+50 XP", "+10"
     const moneyEarned = parseInt((result.reward   || '').replace(/[^0-9-]/g,'')) || 0;
     const xpEarned    = parseInt((result.xp        || '').replace(/[^0-9-]/g,'')) || 0;
     const eloChange   = parseInt((result.elo_diff  || '').replace(/[^0-9-]/g,'')) || 0;
 
-    // Update local cache
+    // Aktualizovat lokalni stav uzivatele
     if (currentUser) {
       currentUser.money      = (currentUser.money      || 0) + moneyEarned;
       currentUser.xp         = (currentUser.xp         || 0) + xpEarned;
-      currentUser.level      = Math.floor(currentUser.xp / 100) + 1;
       currentUser.elo_rating = (currentUser.elo_rating || 1000) + eloChange;
       saveUser();
       syncTopbar();
@@ -663,8 +817,20 @@ async function playMatch() {
 
     showLastMatchBanner(result);
     showMatchResult(result, moneyEarned, xpEarned, eloChange);
+
+    // Toast s vysledkem
+    const isWin  = (result.message || '').includes('Vyhr');
+    const isDraw = (result.message || '').includes('Rem');
+    toast(isWin ? 'ok' : isDraw ? 'info' : 'err',
+      isWin  ? 'Vyhra! +' + moneyEarned + ' minci, +' + xpEarned + ' XP' :
+      isDraw ? 'Remiza! +' + moneyEarned + ' minci' :
+               'Prohra. +' + moneyEarned + ' minci');
+
   } catch (e) {
-    alert('Chyba: ' + e.message);
+    // Zobrazit chybu inline misto alert()
+    $('match-opp-info').textContent = 'Chyba: ' + e.message;
+    $('match-opp-info').style.color = 'var(--rd)';
+    toast('err', e.message);
     btn.disabled = false; btn.textContent = 'ZAHRAT ZAPAS';
   }
 }
@@ -687,9 +853,10 @@ function showMatchResult(result, moneyEarned, xpEarned, eloChange) {
 }
 
 function buildMatchLog(result) {
+  // Backend vrací score jako "2 : 1" (s mezerami kolem ':')
   const parts    = (result.score || '0:0').split(':');
-  const myGoals  = Math.max(0, parseInt(parts[0]) || 0);
-  const oppGoals = Math.max(0, parseInt(parts[1]) || 0);
+  const myGoals  = Math.max(0, parseInt(parts[0].trim()) || 0);
+  const oppGoals = Math.max(0, parseInt(parts[1] ? parts[1].trim() : '0') || 0);
 
   const rand = n => Array.from({length: n}, () => Math.floor(Math.random()*88)+1).sort((a,b)=>a-b);
   const myMins  = rand(myGoals);
@@ -728,11 +895,23 @@ function resetMatch() {
   $('match-setup').style.display  = '';
   selectedOpp = null;
   document.querySelectorAll('.opp-row').forEach(r => r.classList.remove('sel'));
-  $('bot-btn').style.opacity    = '1';
-  $('match-opp-info').textContent = 'Vyber soupe vpravo nebo hraj proti botovi.';
-  $('match-opp-info').style.color = '';
+  $('bot-btn').style.opacity = '1';
   const pb = $('play-btn');
-  pb.disabled = false; pb.textContent = 'ZAHRAT ZAPAS';
+  pb.textContent = 'ZAHRAT ZAPAS';
+
+  // Znovu zkontrolovat počet hráčů
+  const playerCount = teamData.length;
+  if (playerCount !== 11) {
+    pb.disabled = true;
+    $('match-opp-info').textContent =
+      'Mas ' + playerCount + ' hracu. Pro zapas potrebujes presne 11. ' +
+      (playerCount < 11 ? 'Nakup hrace na trzisti.' : 'Propust ' + (playerCount - 11) + ' hrace.');
+    $('match-opp-info').style.color = 'var(--rd)';
+  } else {
+    pb.disabled = false;
+    $('match-opp-info').textContent = 'Vyber soupe vpravo nebo hraj proti botovi.';
+    $('match-opp-info').style.color = '';
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -808,7 +987,14 @@ async function buyPlayer(playerId, price) {
     }
     try { teamData = await apiFetch('GET', '/team'); } catch (_) {}
   } catch (e) {
-    alert('Chyba: ' + e.message);
+    toast('err', e.message);
+    if (card) {
+      const errEl = document.createElement('div');
+      errEl.style.cssText = 'padding:8px 16px;font-size:9px;color:var(--rd);letter-spacing:1px;font-weight:700';
+      errEl.textContent = e.message;
+      card.querySelector('.mc-footer').appendChild(errEl);
+      setTimeout(() => { if (errEl.parentNode) errEl.remove(); }, 4000);
+    }
     if (btn) { btn.disabled = false; btn.textContent = 'KOUPIT'; }
   }
 }
