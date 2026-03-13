@@ -615,7 +615,6 @@ function renderTeam(players) {
   $('team-tbody').innerHTML = players.map((p, i) => {
     const name     = escHtml(p.name     || '—');
     const pos      = escHtml(p.position || '—');
-    const safeName = (p.name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const inTrain  = trainingActive[p.id];
     const actionCell = inTrain
       ? '<span class="train-badge" id="tbadge-' + p.id + '">TRENUJE...</span>'
@@ -630,7 +629,7 @@ function renderTeam(players) {
         '<td class="hide-m"><div class="mv-val">' + (p.market_value || 0) + '</div></td>' +
         '<td><div class="act-btns">' +
           actionCell +
-          '<button class="act-btn act-btn-fire" onclick="firePlayer(' + p.id + ',\'' + safeName + '\')">PROPUSTIT</button>' +
+          '<button class="act-btn act-btn-fire" onclick="firePlayer(' + p.id + ')">PROPUSTIT</button>' +
         '</div></td>' +
       '</tr>'
     );
@@ -689,10 +688,20 @@ async function trainPlayer(playerId, btn) {
   }
 }
 
-async function firePlayer(playerId, name) {
-  if (!confirm('Opravdu propustit hrace ' + (name || '') + '?')) return;
-  try { await apiFetch('POST', '/fire_player', { playerId }); } catch (_) {}
-  loadTeam();
+async function firePlayer(playerId) { 
+    if (!confirm("Opravdu chceš hráče propustit? Dostaneš zpět 50 % z jeho tržní hodnoty.")) return; 
+    try { 
+        const res = await apiFetch('POST', '/fire_player', { playerId }); 
+        if (currentUser && res.newMoney !== undefined) { 
+            currentUser.money = res.newMoney; 
+            saveUser(); 
+            syncTopbar(); 
+        } 
+        alert(res.message); 
+        loadTeam(); 
+    } catch (e) { 
+        alert("Chyba: " + e.message); 
+    } 
 }
 
 // ═══════════════════════════════════════════════════

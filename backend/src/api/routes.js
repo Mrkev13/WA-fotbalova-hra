@@ -234,17 +234,32 @@ router.post('/train', authenticateToken, async (req, res) => {
 router.post('/fire_player', authenticateSession, async (req, res) => {
     try {
         const { playerId } = req.body;
-        
-        const result = await db.query(
-            "DELETE FROM players WHERE id = $1 AND user_id = $2 RETURNING id",
+
+        // Zjistíme hodnotu hráče
+        const playerRes = await db.query(
+            "SELECT market_value FROM players WHERE id = $1 AND user_id = $2",
             [playerId, req.user.id]
         );
 
-        if (result.rowCount === 0) {
+        if (playerRes.rowCount === 0) {
             return res.status(404).json({ error: "Hráč nenalezen nebo nepatří tvému týmu." });
         }
 
-        res.json({ message: "Hráč byl úspěšně propuštěn z týmu." });
+        const refund = Math.floor((playerRes.rows[0].market_value || 0) / 2);
+
+        // Smažeme hráče
+        await db.query("DELETE FROM players WHERE id = $1", [playerId]);
+        
+        // Vrátíme peníze uživateli
+        const userRes = await db.query(
+            "UPDATE users SET money = money + $1 WHERE id = $2 RETURNING money",
+            [refund, req.user.id]
+        );
+
+        res.json({
+            message: `Hráč propuštěn. Získal jsi zpět ${refund} mincí (50 % hodnoty).`,
+            newMoney: userRes.rows[0].money
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

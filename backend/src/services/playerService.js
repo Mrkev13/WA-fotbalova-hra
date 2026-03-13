@@ -22,15 +22,19 @@ async function generateRandomPlayer(userId, positionOverride) {
     const position = positionOverride || POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
 
     let att = 0, def = 0;
-    if (position === 'Útočník') {
-        att = getRandomInt(65, 95);
-        def = getRandomInt(10, 35);
-    } else if (position === 'Obránce' || position === 'Brankář') {
-        att = getRandomInt(10, 35);
+    if (position === 'Brankář') {
+        att = getRandomInt(5, 15);
+        def = getRandomInt(75, 95);
+    } else if (position === 'Obránce') {
+        att = getRandomInt(15, 35);
         def = getRandomInt(65, 95);
+    } else if (position === 'Útočník') {
+        att = getRandomInt(70, 95);
+        def = getRandomInt(15, 35);
     } else {
-        att = getRandomInt(40, 80);
-        def = getRandomInt(40, 80);
+        const baseStat = getRandomInt(50, 75);
+        att = baseStat + getRandomInt(-10, 10);
+        def = baseStat + getRandomInt(-10, 10);
     }
 
     const marketValue = (att + def) * 10;
@@ -47,15 +51,19 @@ async function generateMarketPlayer() {
     const position = POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
 
     let att = 0, def = 0;
-    if (position === 'Útočník') {
-        att = getRandomInt(65, 95);
-        def = getRandomInt(10, 35);
-    } else if (position === 'Obránce' || position === 'Brankář') {
-        att = getRandomInt(10, 35);
+    if (position === 'Brankář') {
+        att = getRandomInt(5, 15);
+        def = getRandomInt(75, 95);
+    } else if (position === 'Obránce') {
+        att = getRandomInt(15, 35);
         def = getRandomInt(65, 95);
+    } else if (position === 'Útočník') {
+        att = getRandomInt(70, 95);
+        def = getRandomInt(15, 35);
     } else {
-        att = getRandomInt(40, 80);
-        def = getRandomInt(40, 80);
+        const baseStat = getRandomInt(50, 75);
+        att = baseStat + getRandomInt(-10, 10);
+        def = baseStat + getRandomInt(-10, 10);
     }
 
     const marketValue = (att + def) * 10;
