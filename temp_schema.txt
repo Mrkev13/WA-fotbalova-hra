@@ -1,0 +1,153 @@
+﻿-- Database Schema for Pixel Football Tycoon
+
+-- Table: users (HrĂˇÄŤi)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    club_name VARCHAR(255) NOT NULL UNIQUE,
+    money INTEGER DEFAULT 1000 CHECK (money >= 0),
+    xp INTEGER DEFAULT 0 CHECK (xp >= 0),
+    level INTEGER DEFAULT 1 CHECK (level >= 1),
+    elo_rating INTEGER DEFAULT 1000, -- For leaderboard (Elo system)
+    last_daily_bonus TIMESTAMP, -- For 24h bonus tracking
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table: sessions (Pro API pĹ™ihlaĹˇovĂˇnĂ­)
+CREATE TABLE IF NOT EXISTS sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table: players (Fotbalisti)
+CREATE TABLE IF NOT EXISTS players (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    name VARCHAR(255) NOT NULL,
+    position VARCHAR(20) DEFAULT 'Universal' CHECK (position IN ('ĂštoÄŤnĂ­k', 'ZĂˇloĹľnĂ­k', 'ObrĂˇnce', 'BrankĂˇĹ™', 'Universal')),
+    attack INTEGER NOT NULL CHECK (attack BETWEEN 10 AND 100), -- Max 100 limit for training
+    defense INTEGER NOT NULL CHECK (defense BETWEEN 10 AND 100), -- Max 100 limit for training
+    stamina INTEGER DEFAULT 100 CHECK (stamina BETWEEN 0 AND 100), -- Fatigue system
+    market_value INTEGER NOT NULL CHECK (market_value >= 0),
+    status VARCHAR(20) DEFAULT 'IN_TEAM' CHECK (status IN ('ON_MARKET', 'IN_TEAM', 'RETIRED')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Table: training_queue (ÄŚekĂˇrna na trĂ©nink)
+CREATE TABLE IF NOT EXISTS training_queue (
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL,
+    stat_to_improve VARCHAR(20) NOT NULL CHECK (stat_to_improve IN ('attack', 'defense', 'stamina')),
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ends_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+);
+
+-- Table: first_names (SlovnĂ­k kĹ™estnĂ­ch jmen pro generĂˇtor)
+CREATE TABLE IF NOT EXISTS first_names (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Table: last_names (SlovnĂ­k pĹ™Ă­jmenĂ­ pro generĂˇtor)
+CREATE TABLE IF NOT EXISTS last_names (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Table: transactions (LogovĂˇnĂ­ ekonomiky)
+CREATE TABLE IF NOT EXISTS transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL, -- e.g., 'MATCH_REWARD', 'PLAYER_BOUGHT', 'TRAINING'
+    description TEXT,
+    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table: matches (ZĂˇpasy)
+CREATE TABLE IF NOT EXISTS matches (
+    id SERIAL PRIMARY KEY,
+    home_user_id INTEGER NOT NULL,
+    away_user_id INTEGER NOT NULL,
+    score_home INTEGER NOT NULL CHECK (score_home >= 0),
+    score_away INTEGER NOT NULL CHECK (score_away >= 0),
+    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (home_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (away_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CHECK (home_user_id != away_user_id)
+);
+
+-- Table: match_events (Log zĂˇpasu)
+CREATE TABLE IF NOT EXISTS match_events (
+    id SERIAL PRIMARY KEY,
+    match_id INTEGER NOT NULL,
+    minute INTEGER NOT NULL CHECK (minute BETWEEN 1 AND 90),
+    event_type VARCHAR(50) NOT NULL, -- e.g., 'GOAL', 'SHOT', 'SAVE'
+    description TEXT NOT NULL,
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
+);
+
+-- Data pro generĂˇtor (MVP Seed data)
+INSERT INTO first_names (name) VALUES ('Karel'), ('Jan'), ('Petr'), ('Josef'), ('JiĹ™Ă­'), ('Pavel'), ('Martin'), ('TomĂˇĹˇ'), ('Jaroslav'), ('Miroslav') ON CONFLICT DO NOTHING;
+INSERT INTO last_names (name) VALUES ('NovĂˇk'), ('Svoboda'), ('NovotnĂ˝'), ('DvoĹ™Ăˇk'), ('ÄŚernĂ˝'), ('ProchĂˇzka'), ('KuÄŤera'), ('VeselĂ˝'), ('KrejÄŤĂ­'), ('HorĂˇk') ON CONFLICT DO NOTHING;
+
+-- Indexes pro optimalizaci DB dotazĹŻ (Performance Optimization)
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_players_user_id ON players(user_id);
+CREATE INDEX IF NOT EXISTS idx_training_queue_player_id ON training_queue(player_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_matches_home_user_id ON matches(home_user_id);
+CREATE INDEX IF NOT EXISTS idx_matches_away_user_id ON matches(away_user_id);
+CREATE INDEX IF NOT EXISTS idx_match_events_match_id ON match_events(match_id);
+
+-- Triggers (PostgreSQL specific functions for constraints could be added here later, e.g. squad size limit)
+
+
+-- =========================================================
+-- PL/pgSQL FUNKCE PRO ZABEZPEČENÍ TRANSAKCÍ (ODOLNOST API)
+-- =========================================================
+
+CREATE OR REPLACE FUNCTION buy_player_secure(
+    p_buyer_id INTEGER,
+    p_player_id INTEGER
+) RETURNS BOOLEAN AS $body
+DECLARE
+    v_player_price INTEGER;
+    v_buyer_money INTEGER;
+    v_player_status VARCHAR;
+BEGIN
+    SELECT market_value, status INTO v_player_price, v_player_status
+    FROM players 
+    WHERE id = p_player_id 
+    FOR UPDATE;
+
+    IF v_player_price IS NULL OR (v_player_status != 'ON_MARKET' AND user_id IS NOT NULL) THEN
+        RAISE EXCEPTION 'HrĂˇÄŤ nenĂ­ na trhu nebo neexistuje.';
+    END IF;
+
+    SELECT money INTO v_buyer_money
+    FROM users 
+    WHERE id = p_buyer_id 
+    FOR UPDATE;
+
+    IF v_buyer_money < v_player_price THEN
+        RAISE EXCEPTION 'Nedostatek penÄ›z na 11tu.';
+    END IF;
+
+    UPDATE users SET money = money - v_player_price WHERE id = p_buyer_id;
+    UPDATE players SET user_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
+    
+    INSERT INTO transactions (user_id, amount, transaction_type, description)
+    VALUES (p_buyer_id, -v_player_price, 'PLAYER_BOUGHT', 'NĂˇkup hrĂˇÄŤe ID ' || p_player_id);
+
+    RETURN TRUE;
+END;
+$body LANGUAGE plpgsql;
+
