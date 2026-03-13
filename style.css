@@ -121,14 +121,13 @@ body {
   border-bottom: 3px solid var(--bk); min-height: 50px; overflow: hidden;
 }
 .tb-logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px; color: var(--bk);
-  padding: 0 20px; border-right: 3px solid var(--bk);
-  white-space: nowrap; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-  letter-spacing: 2px; flex-shrink: 0; gap: 0;
+  font-family: 'Bebas Neue', sans-serif; 
+  font-size: 22px; color: var(--bk); 
+  padding: 0 20px; border-right: 3px solid var(--bk); 
+  white-space: nowrap; display: flex; align-items: center; 
+  letter-spacing: 2px; flex-shrink: 0; 
 }
 .tb-logo span { color: rgba(0,0,0,.35); }
-.tb-logo-sub { font-size: 7px; font-weight: 700; letter-spacing: 2px; color: rgba(0,0,0,.4); line-height: 1; margin-top: 1px; font-family: 'IBM Plex Mono', monospace; }
 .tb-club {
   flex: 1; min-width: 0; padding: 0 16px;
   display: flex; align-items: center;
@@ -371,7 +370,6 @@ body {
   .login-logo-sub { font-size: 19px; margin-bottom: 24px; }
   .login-form { padding: 22px 18px; }
   .tb-logo { font-size: 16px; padding: 0 12px; }
-  .tb-logo-sub { display: none; }
   .tb-stat { padding: 0 10px; min-width: 44px; }
   .tb-stat-val { font-size: 18px; }
   .tb-stat-lbl { font-size: 7px; }
