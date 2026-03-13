@@ -501,7 +501,8 @@ function renderTeam(players) {
     const inTrain  = trainingActive[p.id];
     const actionCell = inTrain
       ? '<span class="train-badge" id="tbadge-' + p.id + '">TRENUJE...</span>'
-      : '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this)">+1 ATK</button>';
+      : '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this,\'attack\')">+1 ATK</button>' +
+        '<button class="act-btn act-btn-train" onclick="trainPlayer(' + p.id + ',this,\'defense\')">+1 DEF</button>';
     return (
       '<tr id="prow-' + p.id + '">' +
         '<td class="idx">' + (i + 1) + '</td>' +
@@ -519,7 +520,7 @@ function renderTeam(players) {
   }).join('');
 }
 
-async function trainPlayer(playerId, btn) {
+async function trainPlayer(playerId, btn, statType) {
   if (trainingActive[playerId]) return;
   trainingActive[playerId] = true;
   const cell = btn.closest('.act-btns');
@@ -539,8 +540,19 @@ async function trainPlayer(playerId, btn) {
     }
   }, 1000);
 
-  // Call API if endpoint exists; ignore errors gracefully
-  try { await apiFetch('POST', '/train', { playerId }); } catch (_) {}
+  try {
+      await apiFetch('POST', '/train', { playerId, statType });
+      if (currentUser) {
+          currentUser.money -= 50;
+          saveUser();
+          syncTopbar();
+      }
+  } catch (e) {
+      alert("Chyba při tréninku: " + e.message);
+      clearInterval(iv);
+      delete trainingActive[playerId];
+      loadTeam();
+  }
 }
 
 async function firePlayer(playerId, name) {
@@ -643,6 +655,7 @@ async function playMatch() {
     if (currentUser) {
       currentUser.money      = (currentUser.money      || 0) + moneyEarned;
       currentUser.xp         = (currentUser.xp         || 0) + xpEarned;
+      currentUser.level      = Math.floor(currentUser.xp / 100) + 1;
       currentUser.elo_rating = (currentUser.elo_rating || 1000) + eloChange;
       saveUser();
       syncTopbar();

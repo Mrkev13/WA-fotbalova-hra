@@ -19,9 +19,19 @@ async function getRandomName() {
 async function generateRandomPlayer(userId, positionOverride) {
     const fullName = await getRandomName();
 
-    const att = getRandomInt(10, 100);
-    const def = getRandomInt(10, 100);
     const position = positionOverride || POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
+
+    let att = 0, def = 0;
+    if (position === 'Útočník') {
+        att = getRandomInt(65, 95);
+        def = getRandomInt(10, 35);
+    } else if (position === 'Obránce' || position === 'Brankář') {
+        att = getRandomInt(10, 35);
+        def = getRandomInt(65, 95);
+    } else {
+        att = getRandomInt(40, 80);
+        def = getRandomInt(40, 80);
+    }
 
     const marketValue = (att + def) * 10;
 
@@ -34,9 +44,20 @@ async function generateRandomPlayer(userId, positionOverride) {
 
 async function generateMarketPlayer() {
     const fullName = await getRandomName();
-    const att = getRandomInt(10, 100);
-    const def = getRandomInt(10, 100);
     const position = POSITIONS[getRandomInt(0, POSITIONS.length - 1)];
+
+    let att = 0, def = 0;
+    if (position === 'Útočník') {
+        att = getRandomInt(65, 95);
+        def = getRandomInt(10, 35);
+    } else if (position === 'Obránce' || position === 'Brankář') {
+        att = getRandomInt(10, 35);
+        def = getRandomInt(65, 95);
+    } else {
+        att = getRandomInt(40, 80);
+        def = getRandomInt(40, 80);
+    }
+
     const marketValue = (att + def) * 10;
 
     await db.query(

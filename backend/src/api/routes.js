@@ -70,6 +70,16 @@ const authenticateSession = authenticateToken;
 router.post('/register', async (req, res) => {
     const { username, password, club_name } = req.body;
 
+    if (!username || username.trim().length < 3) { 
+        return res.status(400).json({ error: "Uživatelské jméno musí mít alespoň 3 znaky." }); 
+    } 
+    if (!club_name || club_name.trim().length < 3) { 
+        return res.status(400).json({ error: "Název klubu musí mít alespoň 3 znaky." }); 
+    } 
+    if (!password || password.length < 6) { 
+        return res.status(400).json({ error: "Heslo musí mít alespoň 6 znaků." }); 
+    } 
+
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         const startingMoney = economyService.getStartingCapital(); 
@@ -348,18 +358,25 @@ router.post('/match/play', authenticateToken, async (req, res) => {
             ); 
         } 
 
-        // Update uživatele (peníze, XP, ELO)
-        const updatedUserRes = await db.query(
+        // Update uživatele a Level Up odměna 
+        const userRes = await db.query('SELECT xp, level FROM users WHERE id = $1', [userId]); 
+        const currentXp = userRes.rows[0]?.xp || 0; 
+        const currentLevel = userRes.rows[0]?.level || 1; 
+ 
+        const newXp = currentXp + xpReward; 
+        const newLevel = Math.floor(newXp / 100) + 1; 
+ 
+        let finalMoneyReward = moneyReward; 
+        if (newLevel > currentLevel) { 
+            finalMoneyReward += (newLevel - currentLevel) * 100; // +100 mincí za každý level navíc 
+        } 
+ 
+        await db.query( 
             `UPDATE users 
-             SET money = money + $1, xp = xp + $2, elo_rating = elo_rating + $3 
-             WHERE id = $4
-             RETURNING xp`, 
-            [moneyReward, xpReward, eloChange, userId]
-        );
-
-        const xpTotal = updatedUserRes.rows[0]?.xp || 0;
-        const newLevel = Math.floor(xpTotal / 100) + 1;
-        await db.query('UPDATE users SET level = $1 WHERE id = $2', [newLevel, userId]);
+             SET money = money + $1, xp = $2, level = $3, elo_rating = elo_rating + $4 
+             WHERE id = $5`, 
+            [finalMoneyReward, newXp, newLevel, eloChange, userId] 
+        ); 
         
         // Pokud je soupeř reálný hráč, upravíme mu ELO (zjednodušeně)
         if (!opponentIsBot) {
@@ -371,7 +388,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
 
         res.json({
             score: matchResult.resultString,
-            reward: `+${moneyReward} mincí`,
+            reward: `+${finalMoneyReward} mincí`,
             xp: `+${xpReward} XP`,
             elo_diff: `${eloChange > 0 ? '+' : ''}${eloChange}`,
             message: isWin ? "Vyhrál jsi!" : (isDraw ? "Remíza!" : "Prohrál jsi!"),
