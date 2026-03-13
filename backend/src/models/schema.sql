@@ -98,6 +98,11 @@ CREATE TABLE IF NOT EXISTS match_events (
 INSERT INTO first_names (name) VALUES ('Karel'), ('Jan'), ('Petr'), ('Josef'), ('Jiří'), ('Pavel'), ('Martin'), ('Tomáš'), ('Jaroslav'), ('Miroslav') ON CONFLICT DO NOTHING;
 INSERT INTO last_names (name) VALUES ('Novák'), ('Svoboda'), ('Novotný'), ('Dvořák'), ('Černý'), ('Procházka'), ('Kučera'), ('Veselý'), ('Krejčí'), ('Horák') ON CONFLICT DO NOTHING;
 
+-- System Bot for PvE matches (ID 0)
+INSERT INTO users (id, username, password_hash, club_name, money) 
+VALUES (0, 'Bot', 'bot_system_hash', 'Bot Club', 999999) 
+ON CONFLICT (id) DO NOTHING;
+
 -- Indexes pro optimalizaci DB dotazů (Performance Optimization)
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_players_user_id ON players(user_id);
@@ -107,11 +112,11 @@ CREATE INDEX IF NOT EXISTS idx_matches_home_user_id ON matches(home_user_id);
 CREATE INDEX IF NOT EXISTS idx_matches_away_user_id ON matches(away_user_id);
 CREATE INDEX IF NOT EXISTS idx_match_events_match_id ON match_events(match_id);
 
--- Triggers (PostgreSQL specific functions for constraints could be added here later, e.g. squad size limit)
+-- Triggers (PostgreSQL specific functions for constraints could be added here later)
 
 
 -- =========================================================
--- PL/pgSQL FUNKCE PRO ZABEZPE�EN� TRANSAKC� (ODOLNOST API)
+-- PL/pgSQL FUNKCE PRO ZABEZPEČENÍ TRANSAKCÍ (ODOLNOST API)
 -- =========================================================
 
 CREATE OR REPLACE FUNCTION buy_player_secure(
@@ -122,32 +127,36 @@ DECLARE
     v_player_price INTEGER;
     v_buyer_money INTEGER;
     v_player_status VARCHAR;
+    v_owner_id INTEGER;
 BEGIN
-    SELECT market_value, status INTO v_player_price, v_player_status
+    SELECT market_value, status, user_id INTO v_player_price, v_player_status, v_owner_id
     FROM players 
     WHERE id = p_player_id 
     FOR UPDATE;
 
-    IF v_player_price IS NULL OR (v_player_status != 'ON_MARKET' AND user_id IS NOT NULL) THEN
+    -- Check if player exists and is available
+    IF v_player_price IS NULL OR (v_player_status != 'ON_MARKET' AND v_owner_id IS NOT NULL) THEN
         RAISE EXCEPTION 'Hráč není na trhu nebo neexistuje.';
     END IF;
 
+    -- Get buyer money
     SELECT money INTO v_buyer_money
     FROM users 
     WHERE id = p_buyer_id 
     FOR UPDATE;
 
     IF v_buyer_money < v_player_price THEN
-        RAISE EXCEPTION 'Nedostatek peněz na 11tu.';
+        RAISE EXCEPTION 'Nedostatek peněz na nákup.';
     END IF;
 
+    -- Update balances and ownership
     UPDATE users SET money = money - v_player_price WHERE id = p_buyer_id;
     UPDATE players SET user_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
     
+    -- Log transaction
     INSERT INTO transactions (user_id, amount, transaction_type, description)
     VALUES (p_buyer_id, -v_player_price, 'PLAYER_BOUGHT', 'Nákup hráče ID ' || p_player_id);
 
     RETURN TRUE;
 END;
 $body LANGUAGE plpgsql;
-
