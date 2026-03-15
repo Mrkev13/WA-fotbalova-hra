@@ -30,9 +30,9 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
     // Skripty jen ze stejné origin
-    "script-src 'self'",
-    // Styly — same origin + Google Fonts
-    "style-src 'self' https://fonts.googleapis.com",
+    "script-src 'self' 'unsafe-inline'",
+    // Styly — same origin + Google Fonts + inline styly (style= atributy v HTML)
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Fonty — same origin + Google Fonts CDN
     "font-src 'self' https://fonts.gstatic.com",
     // Obrázky — same origin + data URI
