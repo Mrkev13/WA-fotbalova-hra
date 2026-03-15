@@ -1,0 +1,25 @@
+{
+    "registrace_startovni_kapital": 1000,
+    "vyhra_v_zapase": 100,
+    "prohra_v_zapase": 20,
+    "remiza_v_zapase": 20,
+    "nakup_hrace": {
+        "min_cena": 200,
+        "max_cena": 1000,
+        "vypocet": "(attack + defense) * 10"
+    },
+    "trenink_cena": 50,
+    "trenink_vysledek": 1,
+    "trenink_cas_v_sekundach": 10,
+    "vstupni_bonus_24h": 200,
+    "xp_odmeny": {
+        "vyhra": 50,
+        "remiza": 20,
+        "prohra": 10
+    },
+    "elo_odmeny": {
+        "vyhra": 10,
+        "remiza": 0,
+        "prohra": -5
+    }
+}
