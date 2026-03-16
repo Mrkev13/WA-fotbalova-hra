@@ -231,10 +231,9 @@ function closeResult(destination) {
   // Navigace podle tlačítka
   navTo(destination || 'dashboard');
 
-  // Pokud zůstáváme na match, zobraz log
-  if (destination === 'match') {
-    $('match-log').style.display = '';
-  }
+  // Vyčistit result log
+  const rlb = $('result-log-body');
+  if (rlb) rlb.innerHTML = '';
 }
 
 function resetMatch() {
@@ -289,19 +288,23 @@ function buildMatchLog(result) {
   const isDraw = (result.message || '').includes('Rem');
   rows.push({m: 90, cls: isWin ? 'win' : isDraw ? '' : 'lose', text: '<strong>KONEC ZÁPASU</strong> &mdash; ' + escHtml(result.message || '')});
 
-  const body = $('match-log-body');
-  body.innerHTML = '';
+  // Vyplnit oba logy — match stránka i result screen
+  const targets = ['match-log-body', 'result-log-body']
+    .map(id => $(id)).filter(Boolean);
+  targets.forEach(b => b.innerHTML = '');
 
   rows.forEach((ev, i) => {
     setTimeout(() => {
-      const div = document.createElement('div');
-      div.className = 'log-row ' + ev.cls + ' log-hidden';
-      div.innerHTML =
-        '<div class="log-min">' + ev.m + '\'</div>' +
-        '<div class="log-dot"></div>' +
-        '<div>' + ev.text + '</div>';
-      body.appendChild(div);
-      setTimeout(() => div.classList.remove('log-hidden'), 20);
+      targets.forEach(body => {
+        const div = document.createElement('div');
+        div.className = 'log-row ' + ev.cls + ' log-hidden';
+        div.innerHTML =
+          '<div class="log-min">' + ev.m + '\'</div>' +
+          '<div class="log-dot"></div>' +
+          '<div>' + ev.text + '</div>';
+        body.appendChild(div);
+        setTimeout(() => div.classList.remove('log-hidden'), 20);
+      });
     }, i * 300);
   });
 }

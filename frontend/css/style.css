@@ -962,7 +962,8 @@ body::before {
 .lb-wrap { overflow-x: auto; }
 .lb-tbl  { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); }
 .lb-tbl th { font-family: 'Press Start 2P', monospace; font-size: 9px; background: var(--card2); color: var(--ow); padding: 16px 20px; text-align: left; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
-.lb-tbl td { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; color: var(--ow); }
+.lb-tbl th.lb-r { text-align: right; }
+.lb-tbl td { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; color: var(--ow); vertical-align: middle; }
 .lb-tbl tr.me td  { background: rgba(255,107,26,.08); }
 .lb-tbl tr:hover td { background: rgba(255,107,26,.05); }
 .lb-r { text-align: right; }
@@ -1261,4 +1262,28 @@ body::before {
     color: var(--or);
   }
   .nav-logout-mob { display: block; }
+}
+
+/* ── Result log (průběh zápasu na result screenu) ── */
+.result-log {
+  width: 100%;
+  max-width: 680px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.1);
+  margin-top: 28px;
+  scrollbar-width: thin;
+  animation: resultUp .4s ease .4s both;
+}
+.result-log .match-log-head {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: rgba(0,0,0,.4);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  padding: 10px 16px;
+  color: var(--mut);
+  letter-spacing: 2px;
+  position: sticky;
+  top: 0;
 }
