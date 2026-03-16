@@ -6,6 +6,7 @@
   <title>Pixel Football Tycoon</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231e5c1e'/><rect x='6' y='6' width='20' height='20' fill='white'/><rect x='11' y='2' width='10' height='4' fill='%23ff6b1a'/><rect x='11' y='26' width='10' height='4' fill='%23ff6b1a'/><rect x='2' y='11' width='4' height='10' fill='%23ff6b1a'/><rect x='26' y='11' width='4' height='10' fill='%23ff6b1a'/><rect x='11' y='11' width='10' height='10' fill='%23ff6b1a'/><rect x='6' y='6' width='6' height='6' fill='white'/><rect x='20' y='6' width='6' height='6' fill='white'/><rect x='6' y='20' width='6' height='6' fill='white'/><rect x='20' y='20' width='6' height='6' fill='white'/></svg>">
 </head>
 <body>
 
@@ -67,26 +68,26 @@
     <div class="login-logo-sub">TYCOON</div>
 
     <div class="login-tabs">
-      <button class="login-tab act" id="tab-login" onclick="switchTab('login')">PŘIHLÁSIT SE</button>
-      <button class="login-tab"     id="tab-reg"   onclick="switchTab('reg')">REGISTRACE</button>
+      <button class="login-tab act" id="tab-login">PŘIHLÁSIT SE</button>
+      <button class="login-tab"     id="tab-reg"  >REGISTRACE</button>
     </div>
 
     <div class="login-form" id="form-login">
       <div class="f-group">
         <label class="f-label" for="li-user">Uživatelské jméno</label>
         <input class="f-input" id="li-user" type="text" placeholder="manager123"
-               autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"
-               oninput="clearFieldErr('li-user','ferr-li-user')">
+               autocomplete="username"
+              >
         <div class="field-err" id="ferr-li-user"></div>
       </div>
       <div class="f-group">
         <label class="f-label" for="li-pass">Heslo</label>
         <input class="f-input" id="li-pass" type="password" placeholder="••••••••"
-               autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"
-               oninput="clearFieldErr('li-pass','ferr-li-pass')">
+               autocomplete="current-password"
+              >
         <div class="field-err" id="ferr-li-pass"></div>
       </div>
-      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">PŘIHLÁSIT SE</button>
+      <button class="btn btn-primary" id="btn-login">PŘIHLÁSIT SE</button>
       <div class="msg" id="msg-login"></div>
     </div>
 
@@ -95,23 +96,23 @@
         <label class="f-label" for="re-user">Uživatelské jméno <span style="color:var(--mut);font-weight:400">(min. 3 znaky)</span></label>
         <input class="f-input" id="re-user" type="text" placeholder="manager123"
                autocomplete="username"
-               oninput="validateRegField('re-user','ferr-re-user',3,'Min. 3 znaky')">
+              >
         <div class="field-err" id="ferr-re-user"></div>
       </div>
       <div class="f-group">
         <label class="f-label" for="re-club">Název klubu <span style="color:var(--mut);font-weight:400">(min. 3 znaky)</span></label>
         <input class="f-input" id="re-club" type="text" placeholder="FC Hvězdičky"
-               oninput="validateRegField('re-club','ferr-re-club',3,'Min. 3 znaky')">
+              >
         <div class="field-err" id="ferr-re-club"></div>
       </div>
       <div class="f-group">
         <label class="f-label" for="re-pass">Heslo <span style="color:var(--mut);font-weight:400">(min. 6 znaků)</span></label>
         <input class="f-input" id="re-pass" type="password" placeholder="••••••••"
                autocomplete="new-password"
-               oninput="validateRegField('re-pass','ferr-re-pass',6,'Min. 6 znaků')">
+              >
         <div class="field-err" id="ferr-re-pass"></div>
       </div>
-      <button class="btn btn-primary" id="btn-reg" onclick="doRegister()">REGISTROVAT SE</button>
+      <button class="btn btn-primary" id="btn-reg">REGISTROVAT SE</button>
       <div class="msg" id="msg-reg"></div>
     </div>
 
@@ -125,20 +126,22 @@
   <div class="topbar">
     <!-- Logo vlevo nahoře -->
     <div class="tb-logo" title="Pixel Football Tycoon">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-bottom:2px" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="16" height="16" fill="white"/>
-        <rect x="6" y="0" width="8" height="2" fill="#ff6b1a"/>
-        <rect x="6" y="18" width="8" height="2" fill="#ff6b1a"/>
-        <rect x="0" y="6" width="2" height="8" fill="#ff6b1a"/>
-        <rect x="18" y="6" width="2" height="8" fill="#ff6b1a"/>
-        <rect x="6" y="6" width="8" height="8" fill="#ff6b1a"/>
-        <rect x="4" y="4" width="4" height="4" fill="white"/>
-        <rect x="12" y="4" width="4" height="4" fill="white"/>
-        <rect x="4" y="12" width="4" height="4" fill="white"/>
-        <rect x="12" y="12" width="4" height="4" fill="white"/>
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" class="tb-logo-ball">
+        <rect x="4"  y="4"  width="28" height="28" fill="white"/>
+        <rect x="10" y="0"  width="16" height="4"  fill="#ff6b1a"/>
+        <rect x="10" y="32" width="16" height="4"  fill="#ff6b1a"/>
+        <rect x="0"  y="10" width="4"  height="16" fill="#ff6b1a"/>
+        <rect x="32" y="10" width="4"  height="16" fill="#ff6b1a"/>
+        <rect x="10" y="10" width="16" height="16" fill="#ff6b1a"/>
+        <rect x="4"  y="4"  width="8"  height="8"  fill="white"/>
+        <rect x="24" y="4"  width="8"  height="8"  fill="white"/>
+        <rect x="4"  y="24" width="8"  height="8"  fill="white"/>
+        <rect x="24" y="24" width="8"  height="8"  fill="white"/>
       </svg>
-      PIXEL FOOTBALL
-      <div class="tb-logo-sub">TYCOON MANAGER</div>
+      <div class="tb-logo-text">
+        <div class="tb-logo-main">FOOTBALL TYCOON</div>
+        <div class="tb-logo-sub">PIXEL MANAGER</div>
+      </div>
     </div>
 
     <div class="tb-club"><div class="tb-club-name" id="tb-club"></div></div>
@@ -159,19 +162,24 @@
     </div>
 
     <div class="tb-right">
-      <button class="tb-theme" id="tb-theme" onclick="toggleTheme()" title="Přepnout světlý/tmavý režim">&#9681;</button>
-      <button class="tb-logout" onclick="doLogout()">ODHLÁSIT</button>
+      <button class="tb-sound" id="tb-sound" title="Hudba zapnout/vypnout">🔇</button>
+      <button class="tb-theme" id="tb-theme" title="Přepnout světlý/tmavý režim">&#9681;</button>
+      <button class="tb-logout">ODHLÁSIT</button>
     </div>
   </div>
 
-  <div class="app-nav">
-    <button class="nav-btn act" data-page="dashboard"   onclick="navTo('dashboard')">🏠 KLUBOVNA</button>
-    <button class="nav-btn"     data-page="team"        onclick="navTo('team')">👥 TÝM</button>
-    <button class="nav-btn"     data-page="match"       onclick="navTo('match')">⚽ ZÁPAS</button>
-    <button class="nav-btn"     data-page="market"      onclick="navTo('market')">🛒 TRŽIŠTĚ</button>
-    <button class="nav-btn"     data-page="leaderboard" onclick="navTo('leaderboard')">🏆 ŽEBŘÍČEK</button>
-    <button class="nav-btn nav-logout-mob" onclick="doLogout()">ODHLÁSIT</button>
+  <div class="app-nav" id="app-nav">
+    <button class="nav-btn act" data-page="dashboard"  >🏠 KLUBOVNA</button>
+    <button class="nav-btn"     data-page="team"       >👥 TÝM</button>
+    <button class="nav-btn"     data-page="match"      >⚽ ZÁPAS</button>
+    <button class="nav-btn"     data-page="market"     >🛒 TRŽIŠTĚ</button>
+    <button class="nav-btn"     data-page="leaderboard">🏆 ŽEBŘÍČEK</button>
+    <button class="nav-btn nav-logout-mob">🚪 ODHLÁSIT</button>
   </div>
+  <!-- Hamburger tlačítko — jen na mobilu -->
+  <button class="burger-btn" id="burger-btn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 
   <!-- DASHBOARD -->
   <div id="page-dashboard" class="page act">
@@ -190,19 +198,19 @@
             </div>
           </div>
           <div class="dash-actions">
-            <div class="action-card" onclick="navTo('match')">
+            <div class="action-card" data-nav="match">
               <div><div class="ac-title">⚽ ODEHRÁT ZÁPAS</div><div class="ac-desc">VYBER SOUPEŘE A ZAHRAJ ZÁPAS</div></div>
               <div class="ac-arrow">&rsaquo;</div>
             </div>
-            <div class="action-card" onclick="navTo('team')">
+            <div class="action-card" data-nav="team">
               <div><div class="ac-title">👥 SPRÁVA TÝMU</div><div class="ac-desc">HRÁČI &middot; TRÉNINK &middot; SESTAVY</div></div>
               <div class="ac-arrow">&rsaquo;</div>
             </div>
-            <div class="action-card" onclick="navTo('market')">
+            <div class="action-card" data-nav="market">
               <div><div class="ac-title">🛒 TRŽIŠTĚ HRÁČŮ</div><div class="ac-desc">NAKUP POSILY PRO SVŮJ KLUB</div></div>
               <div class="ac-arrow">&rsaquo;</div>
             </div>
-            <div class="action-card" onclick="navTo('leaderboard')">
+            <div class="action-card" data-nav="leaderboard">
               <div><div class="ac-title">🏆 ŽEBŘÍČEK</div><div class="ac-desc">POROVNEJ SE S OSTATNÍMI</div></div>
               <div class="ac-arrow">&rsaquo;</div>
             </div>
@@ -297,12 +305,12 @@
           <div class="mh-label">MŮJ TÝM</div>
           <div class="mh-team" id="mh-my-name">—</div>
           <div class="mh-strength">ÚTOK: <b id="mh-my-atk">—</b> &nbsp;&middot;&nbsp; OBRANA: <b id="mh-my-def">—</b></div>
-          <button class="btn btn-primary" id="play-btn" onclick="playMatch()">⚽ ZAHRÁT ZÁPAS</button>
+          <button class="btn btn-primary" id="play-btn">⚽ ZAHRÁT ZÁPAS</button>
           <div class="match-opp-info" id="match-opp-info">Vyber soupeře vpravo nebo hraj proti botovi.</div>
         </div>
         <div class="match-half">
           <div class="mh-label">VYBER SOUPEŘE</div>
-          <button class="btn btn-dark-ghost btn-sm" id="bot-btn" onclick="selectBot()" style="width:100%;margin-bottom:16px;display:block">🤖 HRÁT PROTI BOTOVI</button>
+          <button class="btn btn-dark-ghost btn-sm" id="bot-btn" style="width:100%;margin-bottom:16px;display:block">🤖 HRÁT PROTI BOTOVI</button>
           <div class="loader" id="opp-loader"><div class="spinner"></div></div>
           <div class="opp-list" id="opp-list"></div>
         </div>
@@ -378,9 +386,9 @@
       </div>
     </div>
     <div class="result-actions">
-      <button class="btn btn-primary btn-lg" onclick="closeResult('match')">⚽ HRÁT ZNOVU</button>
-      <button class="btn btn-outline btn-lg" onclick="closeResult('dashboard')">🏠 KLUBOVNA</button>
-      <button class="btn btn-dark-ghost btn-lg" onclick="closeResult('leaderboard')">🏆 ŽEBŘÍČEK</button>
+      <button class="btn btn-primary btn-lg" data-result="match">⚽ HRÁT ZNOVU</button>
+      <button class="btn btn-outline btn-lg" data-result="dashboard">🏠 KLUBOVNA</button>
+      <button class="btn btn-dark-ghost btn-lg" data-result="leaderboard">🏆 ŽEBŘÍČEK</button>
     </div>
   </div>
 </div>
@@ -399,7 +407,7 @@
 
 
 <!-- ════════════ FLOATING PLAYER (fixed vpravo dole) ════════════ -->
-<div class="floating-player" id="floating-player" onclick="this.classList.add('run-away'); setTimeout(()=>this.remove(), 650)">
+<div class="floating-player" id="floating-player">
   <!-- Tělo panáčka -->
   <svg class="fp-body" width="80" height="110" viewBox="0 0 80 110" fill="none" xmlns="http://www.w3.org/2000/svg">
     <!-- Vlasy -->
@@ -452,6 +460,9 @@
     <rect x="22" y="22" width="8"  height="8"  fill="white"/>
   </svg>
 </div>
+
+
+<script src="js/sound.js"></script>
 
 </body>
 </html>
