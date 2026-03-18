@@ -1,7 +1,7 @@
--- Database Schema for Pixel Football Tycoon
+﻿-- Database Schema for Pixel Football Tycoon
 
--- Table: users (Hráči)
-CREATE TABLE users (
+-- Table: users (HrĂˇÄŤi)
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table: sessions (Pro API přihlašování)
+-- Table: sessions (Pro API pĹ™ihlaĹˇovĂˇnĂ­)
 CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -27,18 +27,18 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- Table: players (Fotbalisti)
 CREATE TABLE IF NOT EXISTS players (
     id SERIAL PRIMARY KEY,
-    owner_id INTEGER,
+    user_id INTEGER,
     name VARCHAR(255) NOT NULL,
-    position VARCHAR(20) DEFAULT 'Universal' CHECK (position IN ('Útočník', 'Záložník', 'Obránce', 'Brankář', 'Universal')),
+    position VARCHAR(20) DEFAULT 'Universal' CHECK (position IN ('ĂštoÄŤnĂ­k', 'ZĂˇloĹľnĂ­k', 'ObrĂˇnce', 'BrankĂˇĹ™', 'Universal')),
     attack INTEGER NOT NULL CHECK (attack BETWEEN 10 AND 100), -- Max 100 limit for training
     defense INTEGER NOT NULL CHECK (defense BETWEEN 10 AND 100), -- Max 100 limit for training
     stamina INTEGER DEFAULT 100 CHECK (stamina BETWEEN 0 AND 100), -- Fatigue system
     market_value INTEGER NOT NULL CHECK (market_value >= 0),
     status VARCHAR(20) DEFAULT 'IN_TEAM' CHECK (status IN ('ON_MARKET', 'IN_TEAM', 'RETIRED')),
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- Table: training_queue (Čekárna na trénink)
+-- Table: training_queue (ÄŚekĂˇrna na trĂ©nink)
 CREATE TABLE IF NOT EXISTS training_queue (
     id SERIAL PRIMARY KEY,
     player_id INTEGER NOT NULL,
@@ -48,19 +48,19 @@ CREATE TABLE IF NOT EXISTS training_queue (
     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
 );
 
--- Table: first_names (Slovník křestních jmen pro generátor)
+-- Table: first_names (SlovnĂ­k kĹ™estnĂ­ch jmen pro generĂˇtor)
 CREATE TABLE IF NOT EXISTS first_names (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
--- Table: last_names (Slovník příjmení pro generátor)
+-- Table: last_names (SlovnĂ­k pĹ™Ă­jmenĂ­ pro generĂˇtor)
 CREATE TABLE IF NOT EXISTS last_names (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
--- Table: transactions (Logování ekonomiky)
+-- Table: transactions (LogovĂˇnĂ­ ekonomiky)
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Table: matches (Zápasy)
+-- Table: matches (ZĂˇpasy)
 CREATE TABLE IF NOT EXISTS matches (
     id SERIAL PRIMARY KEY,
     home_user_id INTEGER NOT NULL,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS matches (
     CHECK (home_user_id != away_user_id)
 );
 
--- Table: match_events (Log zápasu)
+-- Table: match_events (Log zĂˇpasu)
 CREATE TABLE IF NOT EXISTS match_events (
     id SERIAL PRIMARY KEY,
     match_id INTEGER NOT NULL,
@@ -94,25 +94,20 @@ CREATE TABLE IF NOT EXISTS match_events (
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
 );
 
--- Data pro generátor (MVP Seed data)
-INSERT INTO first_names (name) VALUES ('Karel'), ('Jan'), ('Petr'), ('Josef'), ('Jiří'), ('Pavel'), ('Martin'), ('Tomáš'), ('Jaroslav'), ('Miroslav') ON CONFLICT DO NOTHING;
-INSERT INTO last_names (name) VALUES ('Novák'), ('Svoboda'), ('Novotný'), ('Dvořák'), ('Černý'), ('Procházka'), ('Kučera'), ('Veselý'), ('Krejčí'), ('Horák') ON CONFLICT DO NOTHING;
+-- Data pro generĂˇtor (MVP Seed data)
+INSERT INTO first_names (name) VALUES ('Karel'), ('Jan'), ('Petr'), ('Josef'), ('JiĹ™Ă­'), ('Pavel'), ('Martin'), ('TomĂˇĹˇ'), ('Jaroslav'), ('Miroslav') ON CONFLICT DO NOTHING;
+INSERT INTO last_names (name) VALUES ('NovĂˇk'), ('Svoboda'), ('NovotnĂ˝'), ('DvoĹ™Ăˇk'), ('ÄŚernĂ˝'), ('ProchĂˇzka'), ('KuÄŤera'), ('VeselĂ˝'), ('KrejÄŤĂ­'), ('HorĂˇk') ON CONFLICT DO NOTHING;
 
--- System Bot for PvE matches (ID 0)
-INSERT INTO users (id, username, password_hash, club_name, money) 
-VALUES (0, 'Bot', 'bot_system_hash', 'Bot Club', 999999) 
-ON CONFLICT (id) DO NOTHING;
-
--- Indexes pro optimalizaci DB dotazů (Performance Optimization)
+-- Indexes pro optimalizaci DB dotazĹŻ (Performance Optimization)
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
-CREATE INDEX IF NOT EXISTS idx_players_owner_id ON players(owner_id);
+CREATE INDEX IF NOT EXISTS idx_players_user_id ON players(user_id);
 CREATE INDEX IF NOT EXISTS idx_training_queue_player_id ON training_queue(player_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_matches_home_user_id ON matches(home_user_id);
 CREATE INDEX IF NOT EXISTS idx_matches_away_user_id ON matches(away_user_id);
 CREATE INDEX IF NOT EXISTS idx_match_events_match_id ON match_events(match_id);
 
--- Triggers (PostgreSQL specific functions for constraints could be added here later)
+-- Triggers (PostgreSQL specific functions for constraints could be added here later, e.g. squad size limit)
 
 
 -- =========================================================
@@ -127,36 +122,32 @@ DECLARE
     v_player_price INTEGER;
     v_buyer_money INTEGER;
     v_player_status VARCHAR;
-    v_owner_id INTEGER;
 BEGIN
-    SELECT market_value, status, owner_id INTO v_player_price, v_player_status, v_owner_id
+    SELECT market_value, status INTO v_player_price, v_player_status
     FROM players 
     WHERE id = p_player_id 
     FOR UPDATE;
 
-    -- Check if player exists and is available
-    IF v_player_price IS NULL OR (v_player_status != 'ON_MARKET' AND v_owner_id IS NOT NULL) THEN
-        RAISE EXCEPTION 'Hráč není na trhu nebo neexistuje.';
+    IF v_player_price IS NULL OR (v_player_status != 'ON_MARKET' AND user_id IS NOT NULL) THEN
+        RAISE EXCEPTION 'HrĂˇÄŤ nenĂ­ na trhu nebo neexistuje.';
     END IF;
 
-    -- Get buyer money
     SELECT money INTO v_buyer_money
     FROM users 
     WHERE id = p_buyer_id 
     FOR UPDATE;
 
     IF v_buyer_money < v_player_price THEN
-        RAISE EXCEPTION 'Nedostatek peněz na nákup.';
+        RAISE EXCEPTION 'Nedostatek penÄ›z na 11tu.';
     END IF;
 
-    -- Update balances and ownership
     UPDATE users SET money = money - v_player_price WHERE id = p_buyer_id;
-    UPDATE players SET owner_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
+    UPDATE players SET user_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
     
-    -- Log transaction
     INSERT INTO transactions (user_id, amount, transaction_type, description)
-    VALUES (p_buyer_id, -v_player_price, 'PLAYER_BOUGHT', 'Nákup hráče ID ' || p_player_id);
+    VALUES (p_buyer_id, -v_player_price, 'PLAYER_BOUGHT', 'NĂˇkup hrĂˇÄŤe ID ' || p_player_id);
 
     RETURN TRUE;
 END;
 $body LANGUAGE plpgsql;
+

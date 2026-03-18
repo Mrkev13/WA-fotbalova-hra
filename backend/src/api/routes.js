@@ -145,7 +145,7 @@ router.post('/login', async (req, res) => {
 // 3. MŮJ TÝM (/api/team)
 router.get('/team', authenticateToken, async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM players WHERE user_id = $1', [req.user.id]);
+        const result = await db.query('SELECT * FROM players WHERE owner_id = $1', [req.user.id]);
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -157,7 +157,7 @@ router.get('/team', authenticateToken, async (req, res) => {
 router.get('/market', authenticateToken, async (req, res) => {
     try {
         await playerService.ensureMarketPlayers(20);
-        const result = await db.query("SELECT * FROM players WHERE status = 'ON_MARKET' AND user_id IS NULL ORDER BY market_value DESC");
+        const result = await db.query("SELECT * FROM players WHERE status = 'ON_MARKET' AND owner_id IS NULL ORDER BY market_value DESC");
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -203,7 +203,7 @@ router.post('/train', authenticateToken, async (req, res) => {
         }
 
         const playerRes = await client.query(
-            `SELECT ${column} FROM players WHERE id = $1 AND user_id = $2 FOR UPDATE`,
+            `SELECT ${column} FROM players WHERE id = $1 AND owner_id = $2 FOR UPDATE`,
             [playerId, userId]
         );
         if (playerRes.rows.length === 0) {
@@ -217,7 +217,7 @@ router.post('/train', authenticateToken, async (req, res) => {
 
         await client.query('UPDATE users SET money = money - $1 WHERE id = $2', [trainingCost, userId]);
         const updated = await client.query(
-            `UPDATE players SET ${column} = ${column} + 1, market_value = market_value + 10 WHERE id = $1 AND user_id = $2 RETURNING ${column} AS value`,
+            `UPDATE players SET ${column} = ${column} + 1, market_value = market_value + 10 WHERE id = $1 AND owner_id = $2 RETURNING ${column} AS value`,
             [playerId, userId]
         );
 
@@ -237,7 +237,7 @@ router.post('/fire_player', authenticateSession, async (req, res) => {
 
         // Zjistíme hodnotu hráče
         const playerRes = await db.query(
-            "SELECT market_value FROM players WHERE id = $1 AND user_id = $2",
+            "SELECT market_value FROM players WHERE id = $1 AND owner_id = $2",
             [playerId, req.user.id]
         );
 
@@ -272,7 +272,7 @@ router.post('/buy_player', authenticateToken, async (req, res) => {
 
     try {
         const countRes = await db.query(
-            "SELECT COUNT(*)::int AS count FROM players WHERE user_id = $1 AND status = 'IN_TEAM'",
+            "SELECT COUNT(*)::int AS count FROM players WHERE owner_id = $1 AND status = 'IN_TEAM'",
             [userId]
         );
         const inTeamCount = countRes.rows[0]?.count || 0;
@@ -298,7 +298,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
     
     try {
         // Načtení domácího týmu
-        const myTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [userId]);
+        const myTeamRes = await db.query("SELECT attack, defense FROM players WHERE owner_id = $1 AND status = 'IN_TEAM'", [userId]);
         const myTeam = myTeamRes.rows;
         
         if (myTeam.length !== 11) {
@@ -314,7 +314,7 @@ router.post('/match/play', authenticateToken, async (req, res) => {
 
         if (!opponentIsBot) {
             // Načtení soupeřova týmu z DB
-            const oppTeamRes = await db.query("SELECT attack, defense FROM players WHERE user_id = $1 AND status = 'IN_TEAM'", [opponentId]);
+            const oppTeamRes = await db.query("SELECT attack, defense FROM players WHERE owner_id = $1 AND status = 'IN_TEAM'", [opponentId]);
             opponentTeam = oppTeamRes.rows;
             
             if (opponentTeam.length === 0) {

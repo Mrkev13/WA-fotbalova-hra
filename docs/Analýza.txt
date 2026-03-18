@@ -1,0 +1,81 @@
+Game Concept: Pixel Football Tycoon
+1. Základní informace
+● Název hry: Pixel Football Tycoon
+● Žánr: Sportovní manažer / Idle strategie
+● Inspirace: Football Manager, Top Eleven, Shakes & Fidget (ekonomika)
+● Cílová platforma: Webový prohlížeč (PC i mobil)
+2. Stručný popis hry (Elevator pitch)
+Hráč se stává manažerem začínajícího fotbalového klubu, buduje zázemí a skládá tým z
+náhodně generovaných hráčů, aby porazil ostatní v tabulce. Hra je zábavná díky rychlému
+progresu, sbírání lepších kartiček hráčů a strategickému rozhodování o financích klubu.
+3. Cílová skupina
+● Kdo: Spolužáci, fanoušci fotbalu a strategií, hráči, kteří mají rádi viditelný postup
+(čísla jdou nahoru).
+● Kdy: O přestávkách, při cestě do školy (krátké seance).
+● Jak dlouho: Cca 5-10 minut na jedno přihlášení (odklikání tréninku, zápasu a
+nákupů).
+4. Motivace a cíle hráče
+● Hlavní cíl: Dostat svůj tým z "Okresního přeboru" až do "Ligy mistrů" a mít nejsilnější
+sestavu na serveru.
+● Jak pozná zlepšení: Vidí, že jeho tým má vyšší celkové skóre (např. Síla útoku: 85)
+a poráží soupeře, se kterými dříve prohrával.
+● Proč se vracet: Aby vybral pasivní příjem ze stadionu, nenechal hráče "zlenivět"
+(nutnost tréninku) a zkontroloval výsledky ligy, která se hraje automaticky.
+5. Herní smyčka (Core loop)
+1. Příchod: Přihlásím se a zjistím, kolik peněz mi vydělal stadion, zatímco jsem byl
+offline.
+2. Správa: Nakoupím lepší vybavení nebo nové hráče na trhu.
+3. Akce: Nastavím sestavu a odehraju zápas (nebo vyzvu jiného hráče).
+4. Odměna: Získám zkušenosti (XP) a herní měnu za výhru.
+5. Odchod: Nastavím trénink na dobu nepřítomnosti a vrátím se později pro výsledek.
+6. Hlavní mechaniky a systémy
+● Generování fotbalistů: Každý hráč je unikátní "karta" s atributy (Rychlost, Střelba,
+Bránění). Systém generuje náhodná jména a statistiky podle úrovně klubu.
+● Simulace zápasu: Zápas neprobíhá graficky v reálném čase, ale jako matematický
+výpočet. Porovnává se Útok mého týmu vs. Obrana soupeře + faktor náhody.
+Výsledkem je skóre a textový výpis klíčových momentů.
+● Ekonomika a rozvoj: Hráč vydělává prodejem lístků a výhrami. Peníze investuje do
+"Scoutingu" (hledání lepších hráčů) nebo "Stadionu" (zvyšuje pasivní příjem).
+7. Interakce mezi hráči
+● PvP Žebříčky: Hráči jsou řazeni do lig. Každý den se vyhodnotí pořadí a nejlepší
+postupují výš.
+● Přestupový trh: Jednoduchý systém, kde hráč může "propustit" svého hráče za
+poplatek, nebo (v pokročilé verzi) ho nabídnout ostatním v aukci.
+● Přátelské výzvy: Možnost vyzvat konkrétního spolužáka k zápasu "o čest", který
+neovlivňuje ligovou tabulku.
+8. Obsah hry a herní svět
+Hra se odehrává v prostředí fiktivní fotbalové asociace.
+● Klubovna: Hlavní menu, kde hráč vidí své trofeje a statistiky.
+● Hřiště: Obrazovka pro nastavení formace (4-4-2, 3-5-2 atd.).
+● Tržiště: Místo, kde se každou hodinu objevují noví volní hráči k náboru.
+● Budovy: Stadion, Tréninkové centrum, Obchod se suvenýry (každé má vizuální
+úroveň 1–10).
+9. MVP (Minimum Viable Product)
+Cílem je vytvořit hratelné jádro bez složité grafiky.
+● MUST (Musí být):
+○ Registrace a login hráče (uložení dat do databáze).
+○ Vygenerování startovního týmu (11 základních hráčů).
+○ Algoritmus pro výpočet výsledku zápasu (Team A vs Team B).
+○ Základní zobrazení peněz a možnost vylepšit jeden atribut hráče.
+● SHOULD (Mělo by být):
+○ Nákup nových hráčů z "obchodu".
+○ Žebříček TOP 10 hráčů.
+● COULD (Mohlo by být):
+○ Historie zápasů.
+○ Loga klubů a editace dresů.
+10. Rizika
+● Vyváženost hry (Balancing): Hrozí, že jeden tým bude příliš silný a hra přestane být
+pro ostatní zábavná.
+○ Řešení: Zavést "platové stropy" nebo ligy podle úrovní, aby silní nehráli proti
+slabým.
+● Technická náročnost simulace: Pokud by zápas počítal příliš mnoho proměnných,
+může to zatěžovat server.
+○ Řešení: Pro MVP verzi udržet výpočet zápasu jako jednoduchou rovnici (Síla
+A vs Síla B).
+● Nedostatek obsahu: Hráči se mohou rychle začít nudit.
+○ Řešení: Přidat "denní úkoly" (např. "Vyhraj dnes 3 zápasy"), které udrží
+motivaci.
+12. Úspěšnost projektu
+● Cíl: Získat alespoň 5 aktivních hráčů ze třídy, kteří odehrají minimálně 10 zápasů
+každý.
+● Metrika: Hráči se do hry vrátí alespoň 2x během testovacího týdne.

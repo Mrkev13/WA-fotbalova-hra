@@ -40,7 +40,7 @@ async function generateRandomPlayer(userId, positionOverride) {
     const marketValue = (att + def) * 10;
 
     await db.query(
-        `INSERT INTO players (user_id, name, position, attack, defense, market_value, status) 
+        `INSERT INTO players (owner_id, name, position, attack, defense, market_value, status) 
          VALUES ($1, $2, $3, $4, $5, $6, 'IN_TEAM')`,
         [userId, fullName, position, att, def, marketValue]
     );
@@ -69,7 +69,7 @@ async function generateMarketPlayer() {
     const marketValue = (att + def) * 10;
 
     await db.query(
-        `INSERT INTO players (user_id, name, position, attack, defense, market_value, status)
+        `INSERT INTO players (owner_id, name, position, attack, defense, market_value, status)
          VALUES (NULL, $1, $2, $3, $4, $5, 'ON_MARKET')`,
         [fullName, position, att, def, marketValue]
     );
@@ -77,7 +77,7 @@ async function generateMarketPlayer() {
 
 async function ensureMarketPlayers(minCount) {
     const countRes = await db.query(
-        "SELECT COUNT(*)::int AS count FROM players WHERE status = 'ON_MARKET' AND user_id IS NULL"
+        "SELECT COUNT(*)::int AS count FROM players WHERE status = 'ON_MARKET' AND owner_id IS NULL"
     );
     const current = countRes.rows[0]?.count || 0;
     const toCreate = Math.max(0, (minCount || 0) - current);

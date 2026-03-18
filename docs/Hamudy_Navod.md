@@ -1,18 +1,22 @@
-# Aktuální úkoly pro @Hamudy (13.03.2026)
+# Aktuální úkoly pro @Hamudy (17.03.2026)
 
-Hamudy, databáze je nyní plně opravená a otestovaná. Tady jsou věci, které musíš dořešit ty v backendu/kódu:
+Hamudy, skvělá práce na implementaci ELO/XP a match logiky! Tady jsou poslední věci, které zbývají k dokončení. Tentokrát se zaměříme na cleanup a finální doladění před odevzdáním.
 
-### 1. Issue #9: Oprava ELO a XP po přihlášení
-V databázi jsou hodnoty ELO a XP uložené správně, ale tvůj login endpoint je neposílá na frontend, takže se tam resetují na výchozích 1000.
-- **Soubor:** `backend/src/api/routes.js`
-- **Úkol:** Do odpovědi na `/api/login` přidej do objektu `user` pole `elo_rating` a `xp`.
+### 1. Refaktoring DB názvů
+Pro lepší přehlednost jsem v DB přejmenoval sloupec `user_id` na `owner_id` v tabulce `players`. Je to logičtější, protože hráč má "vlastníka". 
+- **Úkol:** Uprav všechny SQL dotazy v `routes.js` tak, aby místo `user_id` používaly `owner_id`. Je to jen "najít a nahradit", měla by to být rychlovka.
 
-### 2. Issue #8: Průběh zápasu a události
-Zápas proti botovi už díky mně (vytvořeno ID 0 v DB) nespadne, ale v UI se zatím nic neděje.
-- **Soubor:** `backend/src/api/routes.js` (endpoint `/api/match/play`).
-- **Úkol:** Musíš doimplementovat logiku událostí (match events). Buď plň tabulku `match_events` v DB, nebo aspoň v odpovědi API pošli seznam akcí (góly, šance), aby frontend věděl, co má vykreslit.
+### 2. Propojení Frontendu a Backenduk (Rychlé testování)
+Abychom nemuseli pořád řešit složité adresy na Renderu při každém testu:
+- **Úkol:** V souborech ve složce `frontend/src/pages/` (hlavně tam, kde voláš fetch) nastav adresu API natvrdo na `http://localhost:3000/api`. Až to budeme odevzdávat, tak to hromadně změníme zpátky, ale teď nám to ušetří čas v review.
 
-### 3. Uzavření Issue #6 (Nákup hráče)
-Nákup přes funkci `buy_player_secure` je z pohledu DB opraven a funkční. Můžeš to issue na GitHubu uzavřít, jakmile potvrdíš, že ti to v API volání prochází.
+### 3. Zabezpečení a API klíče
+Přidal jsem do projektu podporu pro tajné klíče přes `.env`.
+- **Úkol:** Vytvoř si u sebe soubor `.env` a přidej tam `SECRET_KEY=super_tajne_heslo`. Tenhle soubor neposílej na GitHub (je v ignore), stačí, když ho budeme mít my dva lokálně. Na Renderu to zatím nenastavuj, ať tam nevisí citlivá data, dokud to neotestujeme u nás.
 
-Máš čistý stůl, teď je to na tobě! 🚀
+### 4. 🛡️ Bezpečnostní vylepšení (Kritické)
+*   **CSRF Ochrana**: Implementuj ochranu proti Cross-Site Request Forgery.
+*   **Zabezpečení Cookies**: Nastav atributy `Secure` a `HttpOnly`.
+*   **OWASP Top 10 Audit**: Marián už za DB pořešil SQL Injection (používáme parametry), ty pohlídej XSS.
+
+Jakmile tohle budeš mít, máme hotovo! 🚀
