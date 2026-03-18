@@ -1,43 +1,37 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 
 // ═══════════════════════════════════════════════════
 // SECURITY HEADERS
 // ═══════════════════════════════════════════════════
-app.use((req, res, next) => {
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+app.use(helmet());
 
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data:",
-    "connect-src 'self'",
-    "frame-ancestors 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; '));
-
-  next();
-});
+// Custom CSP overrides if needed (Helmet default is usually strict)
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline needed for some frontend scripts if they are inline
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "https://*"], // allow images from anywhere or specific domains
+    connectSrc: ["'self'", "http://localhost:3000", "https://wa-fotbalova-hra.onrender.com"],
+  },
+}));
 
 // ═══════════════════════════════════════════════════
 // MIDDLEWARE
 // ═══════════════════════════════════════════════════
+app.use(compression()); // GZIP komprese pro velké odpovědi
 app.use(express.json());
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+  origin: process.env.ALLOWED_ORIGIN || '*', // Allow all for now or specific domain
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -45,7 +39,11 @@ app.use(cors({
 // ═══════════════════════════════════════════════════
 // STATIC FILES + API
 // ═══════════════════════════════════════════════════
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Nastavení statických souborů s hlavičkami Cache-Control a Etag (invalidace)
+app.use(express.static(path.join(__dirname, '../frontend'), {
+  maxAge: '1d', // Cache pro obrázky, CSS a JS na 1 den
+  etag: true    // Generuje Etag pro invalidaci cache při změně souboru
+}));
 
 const apiRoutes = require('./src/api/routes');
 app.use('/api', apiRoutes);

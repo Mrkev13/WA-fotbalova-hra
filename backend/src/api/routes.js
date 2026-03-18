@@ -96,7 +96,8 @@ router.post('/register', async (req, res) => {
         
         res.status(201).json({ message: "Uživatel a startovní tým úspěšně vytvořeni!" });
     } catch (error) {
-        res.status(500).json({ error: "Chyba při registraci: " + error.message });
+        console.error("Register error:", error);
+        res.status(500).json({ error: "Interní chyba serveru při registraci." });
     }
 });
 
@@ -137,7 +138,8 @@ router.post('/login', async (req, res) => {
             } 
         }); 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Login error:", error);
+        res.status(500).json({ error: "Interní chyba serveru." });
     }
 });
 
@@ -148,7 +150,8 @@ router.get('/team', authenticateToken, async (req, res) => {
         const result = await db.query('SELECT * FROM players WHERE owner_id = $1', [req.user.id]);
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Team fetch error:", error);
+        res.status(500).json({ error: "Interní chyba serveru." });
     }
 });
 
@@ -160,7 +163,8 @@ router.get('/market', authenticateToken, async (req, res) => {
         const result = await db.query("SELECT * FROM players WHERE status = 'ON_MARKET' AND owner_id IS NULL ORDER BY market_value DESC");
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Market fetch error:", error);
+        res.status(500).json({ error: "Interní chyba serveru." });
     }
 });
 
@@ -174,7 +178,8 @@ router.get('/leaderboard', authenticateToken, async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Leaderboard fetch error:", error);
+        res.status(500).json({ error: "Interní chyba serveru." });
     }
 });
 
@@ -225,7 +230,8 @@ router.post('/train', authenticateToken, async (req, res) => {
         res.json({ message: "Trénink proběhl úspěšně.", stat: statType, newValue: updated.rows[0]?.value });
     } catch (error) {
         try { await client.query('ROLLBACK'); } catch (_) {}
-        res.status(500).json({ error: error.message });
+        console.error("Train error:", error);
+        res.status(500).json({ error: "Interní chyba serveru při tréninku." });
     } finally {
         client.release();
     }
@@ -261,7 +267,8 @@ router.post('/fire_player', authenticateSession, async (req, res) => {
             newMoney: userRes.rows[0].money
         });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error("Fire player error:", e);
+        res.status(500).json({ error: "Interní chyba serveru při propouštění hráče." });
     }
 });
 
@@ -286,7 +293,12 @@ router.post('/buy_player', authenticateToken, async (req, res) => {
         res.json({ message: "Hráč úspěšně zakoupen!" });
     } catch (error) {
         // Odchycení chyby z DB (např. nedostatek peněz)
-        res.status(400).json({ error: error.message });
+        if (error.message && (error.message.includes('Nedostatek peněz') || error.message.includes('Hráč není'))) {
+            res.status(400).json({ error: error.message });
+        } else {
+            console.error("Buy player error:", error);
+            res.status(500).json({ error: "Interní chyba serveru při nákupu." });
+        }
     }
 });
 
@@ -411,8 +423,8 @@ router.post('/match/play', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("Match error:", error);
+        res.status(500).json({ error: "Interní chyba serveru při zápasu." });
     }
 });
 
