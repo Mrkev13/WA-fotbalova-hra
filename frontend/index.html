@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pixel Football Tycoon</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Pixel Football Tycoon – online fotbalová manažerská hra. Vybuduj svůj klub, nakupuj hráče, odehrávej zápasy a šplhej na žebříčku manažerů!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Preload kritického fontu pro LCP -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&display=swap"></noscript>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231e5c1e'/><rect x='6' y='6' width='20' height='20' fill='white'/><rect x='11' y='2' width='10' height='4' fill='%23ff6b1a'/><rect x='11' y='26' width='10' height='4' fill='%23ff6b1a'/><rect x='2' y='11' width='4' height='10' fill='%23ff6b1a'/><rect x='26' y='11' width='4' height='10' fill='%23ff6b1a'/><rect x='11' y='11' width='10' height='10' fill='%23ff6b1a'/><rect x='6' y='6' width='6' height='6' fill='white'/><rect x='20' y='6' width='6' height='6' fill='white'/><rect x='6' y='20' width='6' height='6' fill='white'/><rect x='20' y='20' width='6' height='6' fill='white'/></svg>">
 </head>
@@ -16,7 +21,7 @@
 
     <!-- Pixel art panáček s míčem -->
     <div class="pixel-player">
-      <svg width="48" height="72" viewBox="0 0 48 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg role="img" aria-label="Pixel art fotbalový hráč s míčem" width="48" height="72" viewBox="0 0 48 72" fill="none" xmlns="http://www.w3.org/2000/svg">
         <!-- Hlava -->
         <rect x="14" y="0"  width="20" height="20" fill="#F5C784"/>
         <!-- Oči -->
@@ -49,7 +54,7 @@
       </svg>
       <!-- Míč -->
       <div class="pixel-ball-wrap">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="2"  y="2"  width="16" height="16" fill="white"/>
           <rect x="6"  y="0"  width="8"  height="2"  fill="#222"/>
           <rect x="6"  y="18" width="8"  height="2"  fill="#222"/>
@@ -64,7 +69,7 @@
       </div>
     </div>
 
-    <div class="login-logo">PIXEL<br>FOOTBALL</div>
+    <h1 class="login-logo">PIXEL<br>FOOTBALL</h1>
     <div class="login-logo-sub">TYCOON</div>
 
     <div class="login-tabs">
@@ -173,7 +178,7 @@
         <div class="dash-main">
           <div class="dash-hero">
             <div class="dash-welcome">VÍTEJ ZPĚT, MANAŽERE</div>
-            <div class="dash-club-name" id="dash-club">—</div>
+            <h2 class="dash-club-name" id="dash-club">—</h2>
             <div class="dash-last" id="dash-last">
               <div>
                 <div class="dash-last-lbl">POSLEDNÍ ZÁPAS</div>
@@ -229,7 +234,7 @@
   <div id="page-team" class="page">
     <div class="wrap">
       <div class="sec-head">
-        <span class="sec-title">👥 SPRÁVA TÝMU</span>
+        <h2 class="sec-title">👥 SPRÁVA TÝMU</h2>
         <span class="sec-meta" id="team-count">— HRÁČŮ</span>
       </div>
       <div class="team-bar">
@@ -261,7 +266,7 @@
   <div id="page-match" class="page">
     <div class="wrap">
       <div class="sec-head">
-        <span class="sec-title">⚽ ZÁPASOVÁ OBRAZOVKA</span>
+        <h2 class="sec-title">⚽ ZÁPASOVÁ OBRAZOVKA</h2>
         <span class="sec-meta">SIMULACE ZÁPASU</span>
       </div>
 
@@ -313,7 +318,7 @@
   <div id="page-market" class="page">
     <div class="wrap">
       <div class="sec-head">
-        <span class="sec-title">🛒 TRŽIŠTĚ HRÁČŮ</span>
+        <h2 class="sec-title">🛒 TRŽIŠTĚ HRÁČŮ</h2>
         <span class="sec-meta" id="market-meta">—</span>
       </div>
       <div class="loader" id="market-loader"><div class="spinner"></div></div>
@@ -325,7 +330,7 @@
   <div id="page-leaderboard" class="page">
     <div class="wrap">
       <div class="sec-head">
-        <span class="sec-title">🏆 ŽEBŘÍČEK MANAŽERŮ</span>
+        <h2 class="sec-title">🏆 ŽEBŘÍČEK MANAŽERŮ</h2>
         <span class="sec-meta">ELO RANKING</span>
       </div>
       <div class="loader" id="lb-loader"><div class="spinner"></div></div>
@@ -399,7 +404,7 @@
 <!-- ════════════ FLOATING PLAYER (fixed vpravo dole) ════════════ -->
 <div class="floating-player" id="floating-player">
   <!-- Tělo panáčka -->
-  <svg class="fp-body" width="80" height="110" viewBox="0 0 80 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg role="img" aria-label="Pixel art fotbalový hráč" class="fp-body" width="80" height="110" viewBox="0 0 80 110" fill="none" xmlns="http://www.w3.org/2000/svg">
     <!-- Vlasy -->
     <rect x="24" y="0"  width="32" height="6"  fill="#5a2d0c"/>
     <!-- Hlava -->
@@ -437,7 +442,7 @@
     <rect x="42" y="104" width="24" height="4" fill="#ff6b1a"/>
   </svg>
   <!-- Míč pod nohama -->
-  <svg class="fp-ball" width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top:-8px">
+  <svg role="img" aria-label="Pixel art fotbalový míč" class="fp-ball" width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top:-8px">
     <rect x="4"  y="4"  width="28" height="28" fill="white"/>
     <rect x="10" y="0"  width="16" height="4"  fill="#222"/>
     <rect x="10" y="32" width="16" height="4"  fill="#222"/>
