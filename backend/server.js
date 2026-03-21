@@ -27,7 +27,7 @@ app.use(helmet.contentSecurityPolicy({
 // ═══════════════════════════════════════════════════
 // MIDDLEWARE
 // ═══════════════════════════════════════════════════
-app.use(compression()); // GZIP komprese pro velké odpovědi
+app.use(compression({ threshold: 0 })); // GZIP komprese pro VŠECHNY odpovědi (i ty nejmenší)
 app.use(express.json());
 
 app.use(cors({
@@ -57,8 +57,8 @@ app.use((req, res, next) => {
 
 // Nastavení statických souborů s hlavičkami Cache-Control a Etag (invalidace)
 app.use(express.static(path.join(__dirname, '../frontend'), {
-  maxAge: '1d', // Cache pro obrázky, CSS a JS na 1 den
-  etag: true    // Generuje Etag pro invalidaci cache při změně souboru
+  maxAge: 86400000, // Cache pro obrázky, CSS a JS na 1 den v ms (1 den = 86400 sekund = 86400000 ms)
+  etag: true        // Generuje Etag pro invalidaci cache při změně souboru
 }));
 
 const apiRoutes = require('./src/api/routes');
