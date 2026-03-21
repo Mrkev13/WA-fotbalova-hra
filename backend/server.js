@@ -39,6 +39,22 @@ app.use(cors({
 // ═══════════════════════════════════════════════════
 // STATIC FILES + API
 // ═══════════════════════════════════════════════════
+
+// Pokud existuje .min verze JS/CSS souboru, servuj ji místo originálu
+app.use((req, res, next) => {
+  const isJS  = req.path.endsWith('.js')  && !req.path.endsWith('.min.js');
+  const isCSS = req.path.endsWith('.css') && !req.path.endsWith('.min.css');
+  if (!isJS && !isCSS) return next();
+
+  const minPath = req.path.replace(/\.(js|css)$/, '.min.$1');
+  const minFull = path.join(__dirname, '../frontend', minPath);
+
+  if (require('fs').existsSync(minFull)) {
+    req.url = minPath;
+  }
+  next();
+});
+
 // Nastavení statických souborů s hlavičkami Cache-Control a Etag (invalidace)
 app.use(express.static(path.join(__dirname, '../frontend'), {
   maxAge: '1d', // Cache pro obrázky, CSS a JS na 1 den
