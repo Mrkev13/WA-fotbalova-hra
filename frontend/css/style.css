@@ -477,7 +477,7 @@ body::before {
 }
 .tb-stat-lbl {
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
+  font-size: 9px;
   color: var(--mut);
   letter-spacing: 1px;
   margin-top: 3px;
@@ -1044,7 +1044,7 @@ body::before {
     padding: 6px 8px;
   }
   .tb-stat-val    { font-size: 24px; }
-  .tb-stat-lbl    { font-size: 6px; letter-spacing: 0; }
+  .tb-stat-lbl    { font-size: 8px; letter-spacing: 0; }
   .tb-right       { margin-left: auto; order: 2; }
   .tb-logout      { display: none; }
   .tb-theme       { width: 32px; height: 32px; }
