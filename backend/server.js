@@ -64,6 +64,11 @@ app.use(express.static(path.join(__dirname, '../frontend'), {
 const apiRoutes = require('./src/api/routes');
 app.use('/api', apiRoutes);
 
+// Health check pro Render (ověření, že server běží před přepnutím provozu)
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 
 // ═══════════════════════════════════════════════════
 // ERROR HANDLING A LOGOVÁNÍ

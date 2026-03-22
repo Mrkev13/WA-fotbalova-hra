@@ -29,6 +29,15 @@ Pro běh serveru a jeho bezpečnost využíváme následující externí knihovn
 * **dotenv**: Načítání tajných proměnných z prostředí mimo zdrojový kód.
 * **terser** & **clean-css-cli**: Dev nástroje pro minifikaci frontendového JS a CSS kódu.
 
+## Nasazení aplikace (Deployment)
+
+Aplikace běží na platformě Render. Tým používá následující postup pro nasazení:
+
+1. **Příprava:** Standa (nebo pověřený člen) provede kontrolu závislostí (`npm run check-updates`).
+2. **Commit a Push:** Změny se pushnou do hlavní větve repozitáře na GitHubu.
+3. **Automatický build:** Render automaticky detekuje nový kód a spustí příkaz `npm run build`.
+4. **Nasazení bez výpadku (Zero-Downtime):** Render nastartuje novou instanci. Jakmile nová instance odpoví statusem 200 na endpointu `/health`, provoz se plynule přepne na novou verzi a stará se vypne. Hráči nezaznamenají žádný výpadek.
+
 ##  Autorský tým
 * Matěj Hodek - Frontend & Design
 * Mohammed Wehbe - Backend & Herní logika
