@@ -7,7 +7,8 @@
     "start": "node server.js",
     "build:js": "npx terser ../frontend/js/api.js -o ../frontend/js/api.min.js --compress --mangle && npx terser ../frontend/js/auth.js -o ../frontend/js/auth.min.js --compress --mangle && npx terser ../frontend/js/dashboard.js -o ../frontend/js/dashboard.min.js --compress --mangle && npx terser ../frontend/js/team.js -o ../frontend/js/team.min.js --compress --mangle && npx terser ../frontend/js/match.js -o ../frontend/js/match.min.js --compress --mangle && npx terser ../frontend/js/market.js -o ../frontend/js/market.min.js --compress --mangle && npx terser ../frontend/js/leaderboard.js -o ../frontend/js/leaderboard.min.js --compress --mangle && npx terser ../frontend/js/app.js -o ../frontend/js/app.min.js --compress --mangle && npx terser ../frontend/js/sound.js -o ../frontend/js/sound.min.js --compress --mangle",
     "build:css": "npx cleancss -o ../frontend/css/style.min.css ../frontend/css/style.css",
-    "build": "npm run build:js && npm run build:css"
+    "build": "npm run build:js && npm run build:css",
+    "check-updates": "npm outdated && npm audit"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
