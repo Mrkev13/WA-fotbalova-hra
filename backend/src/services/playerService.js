@@ -23,7 +23,7 @@ async function generateRandomPlayer(userId, positionOverride) {
 
     let att = 0, def = 0;
     if (position === 'Brankář') {
-        att = getRandomInt(5, 15);
+        att = getRandomInt(10, 15);
         def = getRandomInt(75, 95);
     } else if (position === 'Obránce') {
         att = getRandomInt(15, 35);
@@ -52,7 +52,7 @@ async function generateMarketPlayer() {
 
     let att = 0, def = 0;
     if (position === 'Brankář') {
-        att = getRandomInt(5, 15);
+        att = getRandomInt(10, 15);
         def = getRandomInt(75, 95);
     } else if (position === 'Obránce') {
         att = getRandomInt(15, 35);
