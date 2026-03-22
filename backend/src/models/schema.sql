@@ -122,7 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_match_events_match_id ON match_events(match_id);
 CREATE OR REPLACE FUNCTION buy_player_secure(
     p_buyer_id INTEGER,
     p_player_id INTEGER
-) RETURNS BOOLEAN AS $body
+) RETURNS BOOLEAN AS $$
 DECLARE
     v_player_price INTEGER;
     v_buyer_money INTEGER;
@@ -159,4 +159,4 @@ BEGIN
 
     RETURN TRUE;
 END;
-$body LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
