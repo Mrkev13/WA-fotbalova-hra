@@ -1,7 +1,7 @@
 -- Database Schema for Pixel Football Tycoon
 
 -- Table: users (Hráči)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- Table: players (Fotbalisti)
 CREATE TABLE IF NOT EXISTS players (
     id SERIAL PRIMARY KEY,
-    owner_id INTEGER,
+    user_id INTEGER,
     name VARCHAR(255) NOT NULL,
     position VARCHAR(20) DEFAULT 'Universal' CHECK (position IN ('Útočník', 'Záložník', 'Obránce', 'Brankář', 'Universal')),
     attack INTEGER NOT NULL CHECK (attack BETWEEN 10 AND 100), -- Max 100 limit for training
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS players (
     stamina INTEGER DEFAULT 100 CHECK (stamina BETWEEN 0 AND 100), -- Fatigue system
     market_value INTEGER NOT NULL CHECK (market_value >= 0),
     status VARCHAR(20) DEFAULT 'IN_TEAM' CHECK (status IN ('ON_MARKET', 'IN_TEAM', 'RETIRED')),
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Table: training_queue (Čekárna na trénink)
@@ -105,7 +105,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Indexes pro optimalizaci DB dotazů (Performance Optimization)
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
-CREATE INDEX IF NOT EXISTS idx_players_owner_id ON players(owner_id);
+CREATE INDEX IF NOT EXISTS idx_players_user_id ON players(user_id);
 CREATE INDEX IF NOT EXISTS idx_training_queue_player_id ON training_queue(player_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_matches_home_user_id ON matches(home_user_id);
@@ -129,7 +129,7 @@ DECLARE
     v_player_status VARCHAR;
     v_owner_id INTEGER;
 BEGIN
-    SELECT market_value, status, owner_id INTO v_player_price, v_player_status, v_owner_id
+    SELECT market_value, status, user_id INTO v_player_price, v_player_status, v_owner_id
     FROM players 
     WHERE id = p_player_id 
     FOR UPDATE;
@@ -151,7 +151,7 @@ BEGIN
 
     -- Update balances and ownership
     UPDATE users SET money = money - v_player_price WHERE id = p_buyer_id;
-    UPDATE players SET owner_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
+    UPDATE players SET user_id = p_buyer_id, status = 'IN_TEAM' WHERE id = p_player_id;
     
     -- Log transaction
     INSERT INTO transactions (user_id, amount, transaction_type, description)
