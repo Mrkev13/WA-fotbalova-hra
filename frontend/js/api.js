@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════════
-const API_BASE = '/api';
+const API_URL = '/api';
 
 // ═══════════════════════════════════════════════════
 // DOM HELPERS
@@ -75,7 +75,7 @@ async function apiFetch(method, path, body) {
   if (body !== undefined) opts.body = JSON.stringify(body);
   let res;
   try {
-    res = await fetch(API_BASE + path, opts);
+    res = await fetch(API_URL + path, opts);
   } catch (_) {
     throw new Error('Nelze se spojit se serverem. Je backend spuštěný?');
   }
