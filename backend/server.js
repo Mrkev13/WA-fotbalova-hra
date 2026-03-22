@@ -64,6 +64,22 @@ app.use(express.static(path.join(__dirname, '../frontend'), {
 const apiRoutes = require('./src/api/routes');
 app.use('/api', apiRoutes);
 
+
+// ═══════════════════════════════════════════════════
+// ERROR HANDLING A LOGOVÁNÍ
+// ═══════════════════════════════════════════════════
+app.use((err, req, res, next) => {
+  const timestamp = new Date().toISOString();
+  // Formát logu: Čas | Typ chyby | Zpráva | Kde se to stalo
+  const logMessage = `[${timestamp}] TYP: ${err.name} | ZPRÁVA: ${err.message} | URL: ${req.originalUrl}\n`;
+
+  // Vypíše do konzole a zároveň uloží do souboru pro tým
+  console.error(logMessage);
+  require('fs').appendFileSync(path.join(__dirname, 'error.log'), logMessage);
+
+  res.status(500).json({ error: 'Interní chyba serveru' });
+});
+
 // ═══════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════
